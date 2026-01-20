@@ -1,0 +1,14 @@
+# Node dependencies
+node_modules/
+
+# Frontend build output
+frontend/build/
+
+# Backend build output
+backend/dist/
+
+# Environment files
+backend/.env
+
+# OS files
+.DS_Store
