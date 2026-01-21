@@ -1,9 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { mockCourses, mockAttendance, mockNotices, mockTimetable } from '../data/mockData';
+import { useNotices } from '../context/NoticesContext';
+import { mockCourses, mockAttendance, mockTimetable } from '../data/mockData';
 
 const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { notices } = useNotices();
 
   const Card: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div style={{
@@ -75,12 +77,26 @@ const StudentDashboard: React.FC = () => {
 
         {/* Notices */}
         <Card title="📢 Recent Notices">
-          {mockNotices.map(notice => (
+          {notices.slice(0, 3).map(notice => (
             <div key={notice.id} style={{
               padding: '10px 0',
               borderBottom: '1px solid #ecf0f1'
             }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{notice.title}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
+                <div style={{ fontWeight: 'bold' }}>{notice.title}</div>
+                {notice.priority === 'high' && (
+                  <div style={{
+                    padding: '2px 6px',
+                    backgroundColor: '#e74c3c',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontSize: '10px',
+                    fontWeight: 'bold'
+                  }}>
+                    URGENT
+                  </div>
+                )}
+              </div>
               <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>
                 {notice.content}
               </div>

@@ -34,40 +34,47 @@ const login = async (
     const response = await fetch('http://localhost:5000/api/flows/trigger', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, Role: role })
+      body: JSON.stringify({ email, password, role })
     });
 
     const data = await response.json();
-    console.log('API Response:', data);
+    console.log('FULL API RESPONSE:', data);
 
-    // The actual login result is nested inside data.data.data
-    const workflowResult = data?.data?.data;
+    const workflowResult = data?.data?.data || {};
+    console.log('WORKFLOW RESULT:', workflowResult);
 
-    if (workflowResult?.status === 'success') {
-      // Use dynamic user data if your workflow sends it, otherwise create minimal object
-      const loggedInUser: User = {
-        id: workflowResult.user?.id || email, // fallback if no id
-        name: workflowResult.user?.name || email, // fallback
+    if (data.success === true && data.data.success === true && data.data.statusCode === "200" && workflowResult.status !== "failed") {
+      
+      // Login successful, now call user-info API
+      const response1 = await fetch('http://localhost:5000/api/flows/user-info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const userInfoData = await response1.json();
+      console.log('USER INFO RESPONSE:', userInfoData);
+
+      setUser({
+        id: email,
+        name: email.split('@')[0],
         email,
         role,
-        rollNumber: workflowResult.user?.rollNumber,
-        department: workflowResult.user?.department,
-        semester: workflowResult.user?.semester
-      };
-      setUser(loggedInUser);
+        rollNumber: role === 'student' ? 'CS2021001' : undefined,
+        department: 'Computer Science',
+        semester: role === 'student' ? 4 : undefined
+      });
       return true;
     } else {
-      // Failed login
-      console.warn('Login failed:', workflowResult?.message || 'Unknown error');
+      console.warn('LOGIN FAILED:', workflowResult.message || 'Unknown error');
       return false;
     }
+
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('LOGIN EXCEPTION:', error);
     return false;
   }
 };
-
-
 
   const logout = () => {
     setUser(null);

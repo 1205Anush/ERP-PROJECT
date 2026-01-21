@@ -1,23 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const StudentInformation: React.FC = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    rollNumber: user?.rollNumber || '',
-    email: user?.email || '',
-    department: user?.department || '',
-    semester: user?.semester || 1,
-    phone: '+91 9876543210',
-    address: '123 Main Street, City, State - 123456',
-    dateOfBirth: '2000-01-15',
-    bloodGroup: 'O+',
-    fatherName: 'John Doe Sr.',
-    motherName: 'Jane Doe',
-    guardianPhone: '+91 9876543211'
+    name: '',
+    rollNumber: '',
+    email: '',
+    department: '',
+    semester: 1,
+    phone: '',
+    address: '',
+    dateOfBirth: '',
+    bloodGroup: '',
+    fatherName: '',
+    motherName: '',
+    guardianPhone: ''
   });
+
+  useEffect(() => {
+    const fetchStudentInfo = async () => {
+      if (user?.email) {
+        try {
+          const response = await fetch('http://localhost:5000/api/flows/user-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email })
+          });
+          
+          const result = await response.json();
+          const studentData = result?.data?.data;
+          
+          if (studentData) {
+            setFormData({
+              name: studentData['full name']?.[0] || '',
+              rollNumber: studentData['roll num']?.[0] || '',
+              email: studentData['email']?.[0] || user.email,
+              department: studentData['department']?.[0] || '',
+              semester: user?.semester || 1,
+              phone: '',
+              address: studentData['address']?.[0] || '',
+              dateOfBirth: studentData['date of birth']?.[0]?.replace(/"/g, '').split('T')[0] || '',
+              bloodGroup: studentData['blood group']?.[0] || '',
+              fatherName: studentData['father name']?.[0] || '',
+              motherName: studentData['mother name']?.[0] || '',
+              guardianPhone: studentData['guardian num']?.[0] || ''
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching student info:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchStudentInfo();
+  }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,6 +109,14 @@ const StudentInformation: React.FC = () => {
       )}
     </div>
   );
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div>Loading student information...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
