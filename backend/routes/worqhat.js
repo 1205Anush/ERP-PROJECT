@@ -61,4 +61,28 @@ router.post("/user-info", async (req, res) => {
   }
 });
 
+// Password reset route
+router.post("/password-reset", async (req, res) => {
+  try {
+    const payload = req.body;
+    
+    console.log("Password reset payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/615e4b23-6668-4c31-a5e3-15d10bb76e41', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Password reset response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Password reset error:", error);
+    res.status(500).json({ message: "Password reset failed" });
+  }
+});
+
 module.exports = router;
