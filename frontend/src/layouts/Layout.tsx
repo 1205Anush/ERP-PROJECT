@@ -112,7 +112,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
                   <div style={{ fontSize: '12px', color: '#7f8c8d' }}>{user?.email}</div>
                 </div>
                 <div
-                  onClick={() => alert('Change Password functionality')}
+                  onClick={() => navigate('/change-password')}
                   style={{ padding: '10px 15px', cursor: 'pointer', borderBottom: '1px solid #ecf0f1' }}
                 >
                   Change Password

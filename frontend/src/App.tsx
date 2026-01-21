@@ -14,6 +14,7 @@ import Courses from './pages/Courses';
 import Exams from './pages/Exams';
 import FeesStatus from './pages/FeesStatus';
 import StudentMarks from './pages/StudentMarks';
+import ChangePassword from './pages/ChangePassword';
 import StudentPerformance from './pages/StudentPerformance';
 
 // Protected Route Component
@@ -147,6 +148,15 @@ const AppRoutes: React.FC = () => {
           ) : (
             <Navigate to="/login" replace />
           )
+        } 
+      />
+      
+      <Route 
+        path="/change-password" 
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
+          </ProtectedRoute>
         } 
       />
       
