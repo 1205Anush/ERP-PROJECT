@@ -85,4 +85,28 @@ router.post("/password-reset", async (req, res) => {
   }
 });
 
+// User registration route
+router.post("/register", async (req, res) => {
+  try {
+    const payload = req.body;
+    
+    console.log("Registration payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/ff0bbfad-4cf4-4687-a229-d730ce687c16', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Registration response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Registration failed" });
+  }
+});
+
 module.exports = router;

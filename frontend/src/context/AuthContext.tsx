@@ -5,7 +5,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: 'student' | 'teacher') => Promise<boolean>;
   logout: () => void;
-  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => boolean;
+  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,22 +80,37 @@ const login = async (
     setUser(null);
   };
 
-  const signup = (name: string, email: string, password: string, role: 'student' | 'teacher'): boolean => {
-    // Mock signup
-    if (name && email && password) {
-      const mockUser: User = {
-        id: '1',
-        name,
-        email,
-        role,
-        rollNumber: role === 'student' ? 'CS2021001' : undefined,
-        department: 'Computer Science',
-        semester: role === 'student' ? 4 : undefined
-      };
-      setUser(mockUser);
-      return true;
+  const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher'): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Name: name, Email: email, Password: password, Role: role })
+      });
+
+      const data = await response.json();
+      console.log('REGISTRATION RESPONSE:', data);
+
+      if (data.success === true && data.data.statusCode !== "400") {
+        const mockUser: User = {
+          id: email,
+          name,
+          email,
+          role,
+          rollNumber: role === 'student' ? 'CS2021001' : undefined,
+          department: 'Computer Science',
+          semester: role === 'student' ? 4 : undefined
+        };
+        setUser(mockUser);
+        return true;
+      } else {
+        console.warn('REGISTRATION FAILED:', data);
+        return false;
+      }
+    } catch (error) {
+      console.error('REGISTRATION EXCEPTION:', error);
+      return false;
     }
-    return false;
   };
 
   return (
