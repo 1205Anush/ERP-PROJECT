@@ -20,13 +20,17 @@ export const mockNotices: Notice[] = [
     id: '1',
     title: 'Mid-term Exam Schedule',
     content: 'Mid-term examinations will begin from March 15th, 2024.',
-    date: '2024-03-01'
+    date: '2024-03-01',
+    author: 'Dr. Smith',
+    status: 'approved'
   },
   {
     id: '2',
     title: 'Library Closure',
     content: 'Library will remain closed on March 10th for maintenance.',
-    date: '2024-03-05'
+    date: '2024-03-05',
+    author: 'Prof. Johnson',
+    status: 'approved'
   }
 ];
 

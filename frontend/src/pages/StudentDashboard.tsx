@@ -1,11 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNotices } from '../context/NoticesContext';
 import { mockCourses, mockAttendance, mockTimetable } from '../data/mockData';
+
+interface ApiNotice {
+  title: string;
+  content: string;
+  priority: number;
+}
 
 const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { notices } = useNotices();
+  const [apiNotices, setApiNotices] = useState<ApiNotice[]>([]);
+
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const fetchNotices = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/notice-fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.data) {
+        const notices = Array.isArray(result.data) ? result.data : [];
+        const extractedNotices = notices.map((notice: any) => ({
+          title: notice.title || 'No Title',
+          content: notice.content || 'No Content',
+          priority: notice.priority || 2
+        }));
+        setApiNotices(extractedNotices);
+      }
+    } catch (error) {
+      console.error('Error fetching notices:', error);
+    }
+  };
 
   const Card: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div style={{
@@ -77,14 +109,14 @@ const StudentDashboard: React.FC = () => {
 
         {/* Notices */}
         <Card title="📢 Recent Notices">
-          {notices.slice(0, 3).map(notice => (
-            <div key={notice.id} style={{
+          {apiNotices.slice(0, 3).map((notice, index) => (
+            <div key={index} style={{
               padding: '10px 0',
               borderBottom: '1px solid #ecf0f1'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
                 <div style={{ fontWeight: 'bold' }}>{notice.title}</div>
-                {notice.priority === 'high' && (
+                {notice.priority === 1 && (
                   <div style={{
                     padding: '2px 6px',
                     backgroundColor: '#e74c3c',
@@ -100,11 +132,11 @@ const StudentDashboard: React.FC = () => {
               <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>
                 {notice.content}
               </div>
-              <div style={{ fontSize: '12px', color: '#95a5a6' }}>
-                {new Date(notice.date).toLocaleDateString()}
-              </div>
             </div>
           ))}
+          {apiNotices.length === 0 && (
+            <div style={{ color: '#7f8c8d', fontStyle: 'italic' }}>No notices available</div>
+          )}
         </Card>
 
         {/* Weekly Timetable */}

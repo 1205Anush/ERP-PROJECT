@@ -1,22 +1,56 @@
 import React, { useState } from 'react';
 import { useNotices } from '../context/NoticesContext';
+import { useAuth } from '../context/AuthContext';
 
 const Notices: React.FC = () => {
-  const { notices, addNotice, deleteNotice } = useNotices();
+  const { notices, addNotice, withdrawNotice } = useNotices();
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '', priority: 'medium' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addNotice(formData);
-    setFormData({ title: '', content: '', priority: 'medium' });
-    setShowForm(false);
+    
+    try {
+      const priorityMap = { high: 1, medium: 2, low: 3 };
+      const payload = {
+        operation: 'add',
+        title: formData.title,
+        content: formData.content,
+        priority: priorityMap[formData.priority as keyof typeof priorityMap]
+      };
+      
+      console.log('Sending notice payload:', payload);
+      
+      const response = await fetch('http://localhost:5000/api/flows/notice-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      console.log('Notice add response:', result);
+      
+      if (response.ok) {
+        addNotice({ ...formData, author: user?.name || 'Unknown' });
+        setFormData({ title: '', content: '', priority: 'medium' });
+        setShowForm(false);
+        alert('Notice request submitted successfully!');
+      } else {
+        alert('Failed to submit notice request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting notice:', error);
+      alert('Error submitting notice request. Please try again.');
+    }
   };
+
+  const teacherNotices = notices.filter(notice => notice.author === user?.name);
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h2 style={{ color: '#2c3e50', margin: 0 }}>Notices Management</h2>
+        <h2 style={{ color: '#2c3e50', margin: 0 }}>My Notice Requests</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
@@ -28,12 +62,13 @@ const Notices: React.FC = () => {
             cursor: 'pointer'
           }}
         >
-          {showForm ? 'Cancel' : 'Add Notice'}
+          {showForm ? 'Cancel' : 'Request Notice'}
         </button>
       </div>
 
       {showForm && (
         <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ marginBottom: '20px', color: '#2c3e50' }}>Request New Notice</h3>
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Title</label>
@@ -68,14 +103,14 @@ const Notices: React.FC = () => {
               </select>
             </div>
             <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-              Add Notice
+              Submit Request
             </button>
           </form>
         </div>
       )}
 
       <div style={{ display: 'grid', gap: '20px' }}>
-        {notices.map(notice => (
+        {teacherNotices.map(notice => (
           <div key={notice.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
@@ -89,14 +124,22 @@ const Notices: React.FC = () => {
                   }}>
                     Priority: {notice.priority.toUpperCase()}
                   </span>
+                  <span style={{
+                    color: notice.status === 'approved' ? '#27ae60' : notice.status === 'rejected' ? '#e74c3c' : '#f39c12',
+                    fontWeight: 'bold'
+                  }}>
+                    Status: {notice.status.toUpperCase()}
+                  </span>
                 </div>
               </div>
-              <button
-                onClick={() => deleteNotice(notice.id)}
-                style={{ padding: '5px 10px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
-              >
-                Delete
-              </button>
+              {notice.status === 'pending' && (
+                <button
+                  onClick={() => withdrawNotice(notice.id)}
+                  style={{ padding: '5px 10px', backgroundColor: '#e67e22', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+                >
+                  Withdraw
+                </button>
+              )}
             </div>
           </div>
         ))}

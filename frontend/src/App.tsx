@@ -16,9 +16,12 @@ import FeesStatus from './pages/FeesStatus';
 import StudentMarks from './pages/StudentMarks';
 import ChangePassword from './pages/ChangePassword';
 import StudentPerformance from './pages/StudentPerformance';
+import AdminDashboard from './pages/AdminDashboard';
+import ExamDashboard from './pages/ExamDashboard';
+import AdminNotices from './pages/AdminNotices';
 
 // Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'student' | 'teacher' }> = ({ 
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'student' | 'teacher' | 'admin' | 'exam_department' }> = ({ 
   children, 
   allowedRole 
 }) => {
@@ -29,7 +32,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'stude
   }
   
   if (allowedRole && user.role !== allowedRole) {
-    return <Navigate to={user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} replace />;
+    const dashboardRoutes = {
+      student: '/student/dashboard',
+      teacher: '/teacher/dashboard',
+      admin: '/admin/dashboard',
+      exam_department: '/exam/dashboard'
+    };
+    return <Navigate to={dashboardRoutes[user.role]} replace />;
   }
   
   return <>{children}</>;
@@ -44,15 +53,30 @@ const AppRoutes: React.FC = () => {
       {/* Public Routes */}
       <Route 
         path="/login" 
-        element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} replace /> : <Login />} 
+        element={user ? <Navigate to={{
+          student: '/student/dashboard',
+          teacher: '/teacher/dashboard',
+          admin: '/admin/dashboard',
+          exam_department: '/exam/dashboard'
+        }[user.role]} replace /> : <Login />} 
       />
       <Route 
         path="/signup" 
-        element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} replace /> : <Signup />} 
+        element={user ? <Navigate to={{
+          student: '/student/dashboard',
+          teacher: '/teacher/dashboard',
+          admin: '/admin/dashboard',
+          exam_department: '/exam/dashboard'
+        }[user.role]} replace /> : <Signup />} 
       />
       <Route 
         path="/forgot-password" 
-        element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} replace /> : <ForgotPassword />} 
+        element={user ? <Navigate to={{
+          student: '/student/dashboard',
+          teacher: '/teacher/dashboard',
+          admin: '/admin/dashboard',
+          exam_department: '/exam/dashboard'
+        }[user.role]} replace /> : <ForgotPassword />} 
       />
       
       {/* Protected Student Routes */}
@@ -139,12 +163,45 @@ const AppRoutes: React.FC = () => {
         } 
       />
       
+      {/* Protected Admin Routes */}
+      <Route 
+        path="/admin/dashboard" 
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/notices" 
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <AdminNotices />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Protected Exam Department Routes */}
+      <Route 
+        path="/exam/dashboard" 
+        element={
+          <ProtectedRoute allowedRole="exam_department">
+            <ExamDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      
       {/* Default Route */}
       <Route 
         path="/" 
         element={
           user ? (
-            <Navigate to={user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} replace />
+            <Navigate to={{
+              student: '/student/dashboard',
+              teacher: '/teacher/dashboard',
+              admin: '/admin/dashboard',
+              exam_department: '/exam/dashboard'
+            }[user.role]} replace />
           ) : (
             <Navigate to="/login" replace />
           )

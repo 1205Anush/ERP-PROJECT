@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'teacher';
+  role: 'student' | 'teacher' | 'admin' | 'exam_department';
   rollNumber?: string;
   department?: string;
   semester?: number;
@@ -26,6 +26,8 @@ export interface Notice {
   title: string;
   content: string;
   date: string;
+  author: string;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface TimetableEntry {

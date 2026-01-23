@@ -3,9 +3,9 @@ import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: 'student' | 'teacher') => Promise<boolean>;
+  login: (email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => Promise<boolean>;
   logout: () => void;
-  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => boolean;
+  signup: (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 const login = async (
   email: string,
   password: string,
-  role: 'student' | 'teacher'
+  role: 'student' | 'teacher' | 'admin' | 'exam_department'
 ): Promise<boolean> => {
   try {
     const response = await fetch('http://localhost:5000/api/flows/trigger', {
@@ -80,7 +80,7 @@ const login = async (
     setUser(null);
   };
 
-  const signup = (name: string, email: string, password: string, role: 'student' | 'teacher'): boolean => {
+  const signup = (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department'): boolean => {
     // Mock signup
     if (name && email && password) {
       const mockUser: User = {

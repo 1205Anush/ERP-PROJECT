@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [role, setRole] = useState<'student' | 'teacher' | 'admin' | 'exam_department'>('student');
   const [error, setError] = useState('');
   
   const { login } = useAuth();
@@ -17,7 +17,15 @@ const Login: React.FC = () => {
     
     const success = await login(email, password, role);
     if (success) {
-      navigate(role === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+      if (role === 'student') {
+        navigate('/student/dashboard');
+      } else if (role === 'teacher') {
+        navigate('/teacher/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (role === 'exam_department') {
+        navigate('/exam/dashboard');
+      }
     } else {
       setError('Invalid credentials');
     }
@@ -89,7 +97,7 @@ const Login: React.FC = () => {
             </label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+              onChange={(e) => setRole(e.target.value as 'student' | 'teacher' | 'admin' | 'exam_department')}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -100,6 +108,8 @@ const Login: React.FC = () => {
             >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
+              <option value="admin">Admin</option>
+              <option value="exam_department">Exam Department</option>
             </select>
           </div>
           
