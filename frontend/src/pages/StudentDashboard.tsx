@@ -18,21 +18,37 @@ const StudentDashboard: React.FC = () => {
 
   const fetchNotices = async () => {
     try {
+      console.log('Fetching approved notices for dashboard...');
       const response = await fetch('http://localhost:5000/api/flows/notice-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       const result = await response.json();
-      
-      if (response.ok && result.data) {
-        const notices = Array.isArray(result.data) ? result.data : [];
-        const extractedNotices = notices.map((notice: any) => ({
-          title: notice.title || 'No Title',
-          content: notice.content || 'No Content',
-          priority: notice.priority || 2
-        }));
-        setApiNotices(extractedNotices);
+      console.log('Dashboard notices response:', result);
+
+      if (response.ok && result.data && result.data.data) {
+        const apiData = result.data.data;
+
+        // Extract arrays (same logic as StudentNotices and AdminNotices)
+        const titleArray = apiData.title || [];
+        const contentArray = apiData.content || [];
+        const priorityArray = apiData.priority ? apiData.priority.map((p: string) => parseInt(p)) : [];
+
+        // Combine arrays into notice objects
+        const notices: ApiNotice[] = [];
+        const maxLength = Math.max(titleArray.length, contentArray.length, priorityArray.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          notices.push({
+            title: titleArray[i] || 'No Title',
+            content: (contentArray[i] || 'No Content').trim(),
+            priority: priorityArray[i] || 2
+          });
+        }
+
+        console.log('Dashboard notices loaded:', notices);
+        setApiNotices(notices);
       }
     } catch (error) {
       console.error('Error fetching notices:', error);
@@ -109,34 +125,40 @@ const StudentDashboard: React.FC = () => {
 
         {/* Notices */}
         <Card title="📢 Recent Notices">
-          {apiNotices.slice(0, 3).map((notice, index) => (
-            <div key={index} style={{
-              padding: '10px 0',
-              borderBottom: '1px solid #ecf0f1'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
-                <div style={{ fontWeight: 'bold' }}>{notice.title}</div>
-                {notice.priority === 1 && (
-                  <div style={{
-                    padding: '2px 6px',
-                    backgroundColor: '#e74c3c',
-                    color: 'white',
-                    borderRadius: '8px',
-                    fontSize: '10px',
-                    fontWeight: 'bold'
-                  }}>
-                    URGENT
-                  </div>
-                )}
+          <div style={{
+            maxHeight: '300px',
+            overflowY: 'auto',
+            paddingRight: '5px'
+          }}>
+            {apiNotices.map((notice, index) => (
+              <div key={index} style={{
+                padding: '10px 0',
+                borderBottom: '1px solid #ecf0f1'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
+                  <div style={{ fontWeight: 'bold' }}>{notice.title}</div>
+                  {notice.priority === 1 && (
+                    <div style={{
+                      padding: '2px 6px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      borderRadius: '8px',
+                      fontSize: '10px',
+                      fontWeight: 'bold'
+                    }}>
+                      URGENT
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>
+                  {notice.content}
+                </div>
               </div>
-              <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>
-                {notice.content}
-              </div>
-            </div>
-          ))}
-          {apiNotices.length === 0 && (
-            <div style={{ color: '#7f8c8d', fontStyle: 'italic' }}>No notices available</div>
-          )}
+            ))}
+            {apiNotices.length === 0 && (
+              <div style={{ color: '#7f8c8d', fontStyle: 'italic' }}>No notices available</div>
+            )}
+          </div>
         </Card>
 
         {/* Weekly Timetable */}

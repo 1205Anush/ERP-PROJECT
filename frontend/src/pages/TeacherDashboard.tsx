@@ -9,9 +9,8 @@ const TeacherDashboard: React.FC = () => {
     { title: 'Notices', description: 'Manage announcements and notices', icon: '📢', path: '/teacher/notices', color: '#3498db' },
     { title: 'Attendance', description: 'Track student attendance', icon: '📋', path: '/teacher/attendance', color: '#27ae60' },
     { title: 'Courses', description: 'Manage course information', icon: '📚', path: '/teacher/courses', color: '#f39c12' },
-    { title: 'Exams', description: 'Schedule and manage exams', icon: '📝', path: '/teacher/exams', color: '#e74c3c' },
+    { title: 'View Exams', description: 'View upcoming exams and schedules', icon: '📝', path: '/teacher/exams', color: '#e74c3c' },
     { title: 'Fees Status', description: 'Monitor student fee payments', icon: '💰', path: '/teacher/fees-status', color: '#9b59b6' },
-    { title: 'Student Marks', description: 'Add and manage student marks', icon: '📊', path: '/teacher/student-marks', color: '#1abc9c' },
     { title: 'Performance', description: 'View student performance analytics', icon: '📈', path: '/teacher/student-performance', color: '#34495e' }
   ];
 
@@ -71,7 +70,7 @@ const TeacherDashboard: React.FC = () => {
           </div>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12' }}>3</div>
-            <div style={{ color: '#7f8c8d' }}>Pending Exams</div>
+            <div style={{ color: '#7f8c8d' }}>Upcoming Exams</div>
           </div>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#e74c3c' }}>12</div>

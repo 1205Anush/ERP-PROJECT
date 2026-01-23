@@ -8,18 +8,27 @@ const Signup: React.FC = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
-    if (signup(name, email, password, role)) {
-      navigate(role === 'student' ? '/student/dashboard' : '/teacher/dashboard');
-    } else {
-      setError('Signup failed');
+    try {
+      const success = await signup(name, email, password, role);
+      if (success) {
+        navigate(role === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+      } else {
+        setError('Signup failed. Please try again.');
+      }
+    } catch (error) {
+      setError('An error occurred during signup.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,19 +139,20 @@ const Signup: React.FC = () => {
           
           <button
             type="submit"
+            disabled={loading}
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#27ae60',
+              backgroundColor: loading ? '#95a5a6' : '#27ae60',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               fontSize: '16px',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '20px'
             }}
           >
-            Sign Up
+            {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
         

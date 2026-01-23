@@ -21,16 +21,16 @@ import ExamDashboard from './pages/ExamDashboard';
 import AdminNotices from './pages/AdminNotices';
 
 // Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'student' | 'teacher' | 'admin' | 'exam_department' }> = ({ 
-  children, 
-  allowedRole 
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'student' | 'teacher' | 'admin' | 'exam_department' }> = ({
+  children,
+  allowedRole
 }) => {
   const { user } = useAuth();
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (allowedRole && user.role !== allowedRole) {
     const dashboardRoutes = {
       student: '/student/dashboard',
@@ -40,7 +40,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'stude
     };
     return <Navigate to={dashboardRoutes[user.role]} replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -51,149 +51,157 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={user ? <Navigate to={{
           student: '/student/dashboard',
           teacher: '/teacher/dashboard',
           admin: '/admin/dashboard',
           exam_department: '/exam/dashboard'
-        }[user.role]} replace /> : <Login />} 
+        }[user.role]} replace /> : <Login />}
       />
-      <Route 
-        path="/signup" 
+      <Route
+        path="/signup"
         element={user ? <Navigate to={{
           student: '/student/dashboard',
           teacher: '/teacher/dashboard',
           admin: '/admin/dashboard',
           exam_department: '/exam/dashboard'
-        }[user.role]} replace /> : <Signup />} 
+        }[user.role]} replace /> : <Signup />}
       />
-      <Route 
-        path="/forgot-password" 
+      <Route
+        path="/forgot-password"
         element={user ? <Navigate to={{
           student: '/student/dashboard',
           teacher: '/teacher/dashboard',
           admin: '/admin/dashboard',
           exam_department: '/exam/dashboard'
-        }[user.role]} replace /> : <ForgotPassword />} 
+        }[user.role]} replace /> : <ForgotPassword />}
       />
-      
+
       {/* Protected Student Routes */}
-      <Route 
-        path="/student/*" 
+      <Route
+        path="/student/*"
         element={
           <ProtectedRoute allowedRole="student">
             <Student />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/student/notices" 
+      <Route
+        path="/student/notices"
         element={
           <ProtectedRoute allowedRole="student">
             <StudentNotices />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Protected Teacher Routes */}
-      <Route 
-        path="/teacher/dashboard" 
+      <Route
+        path="/teacher/dashboard"
         element={
           <ProtectedRoute allowedRole="teacher">
             <TeacherDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/notices" 
+      <Route
+        path="/teacher/notices"
         element={
           <ProtectedRoute allowedRole="teacher">
             <Notices />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/attendance" 
+      <Route
+        path="/teacher/attendance"
         element={
           <ProtectedRoute allowedRole="teacher">
             <Attendance />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/courses" 
+      <Route
+        path="/teacher/courses"
         element={
           <ProtectedRoute allowedRole="teacher">
             <Courses />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/exams" 
+      <Route
+        path="/teacher/exams"
         element={
           <ProtectedRoute allowedRole="teacher">
             <Exams />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/fees-status" 
+      <Route
+        path="/teacher/fees-status"
         element={
           <ProtectedRoute allowedRole="teacher">
             <FeesStatus />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/teacher/student-marks" 
-        element={
-          <ProtectedRoute allowedRole="teacher">
-            <StudentMarks />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/teacher/student-performance" 
+      <Route
+        path="/teacher/student-performance"
         element={
           <ProtectedRoute allowedRole="teacher">
             <StudentPerformance />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Protected Admin Routes */}
-      <Route 
-        path="/admin/dashboard" 
+      <Route
+        path="/admin/dashboard"
         element={
           <ProtectedRoute allowedRole="admin">
             <AdminDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin/notices" 
+      <Route
+        path="/admin/notices"
         element={
           <ProtectedRoute allowedRole="admin">
             <AdminNotices />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Protected Exam Department Routes */}
-      <Route 
-        path="/exam/dashboard" 
+      <Route
+        path="/exam/dashboard"
         element={
           <ProtectedRoute allowedRole="exam_department">
             <ExamDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+      <Route
+        path="/exam/exams"
+        element={
+          <ProtectedRoute allowedRole="exam_department">
+            <Exams />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/exam/student-marks"
+        element={
+          <ProtectedRoute allowedRole="exam_department">
+            <StudentMarks />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Default Route */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
           user ? (
             <Navigate to={{
@@ -205,18 +213,18 @@ const AppRoutes: React.FC = () => {
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
-      
-      <Route 
-        path="/change-password" 
+
+      <Route
+        path="/change-password"
         element={
           <ProtectedRoute>
             <ChangePassword />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -229,7 +237,7 @@ const App: React.FC = () => {
     <AuthProvider>
       <NoticesProvider>
         <Router>
-          <div style={{ 
+          <div style={{
             minHeight: '100vh',
             backgroundColor: '#f8f9fa',
             fontFamily: 'Arial, sans-serif'
