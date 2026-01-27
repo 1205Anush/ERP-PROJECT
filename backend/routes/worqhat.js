@@ -44,7 +44,7 @@ router.post("/trigger", async (req, res) => {
 router.post("/user-info", async (req, res) => {
   try {
     const payload = req.body; // { userId, email, role, other }
-    
+
     console.log("User info payload:", payload);
     const response = await fetch('https://api.worqhat.com/flows/trigger/a5a648d0-67e1-429c-875b-bfa9bc414777', {
       method: "POST",
@@ -68,7 +68,7 @@ router.post("/user-info", async (req, res) => {
 router.post("/password-reset", async (req, res) => {
   try {
     const payload = req.body;
-    
+
     console.log("Password reset payload:", payload);
     const response = await fetch('https://api.worqhat.com/flows/trigger/615e4b23-6668-4c31-a5e3-15d10bb76e41', {
       method: "POST",
@@ -92,7 +92,7 @@ router.post("/password-reset", async (req, res) => {
 router.post("/register", async (req, res) => {
   try {
     const payload = req.body;
-    
+
     console.log("Registration payload:", payload);
     const response = await fetch('https://api.worqhat.com/flows/trigger/ff0bbfad-4cf4-4687-a229-d730ce687c16', {
       method: "POST",
@@ -109,6 +109,149 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ message: "Registration failed" });
+  }
+});
+
+// Notice add route
+router.post("/notice-add", async (req, res) => {
+  try {
+    const { title, content, priority } = req.body;
+
+    // Construct payload with fixed operation 'add'
+    const payload = {
+      operation: 'add',
+      title,
+      content,
+      priority: parseInt(priority), // Ensure priority is numeric (1: High, 2: Medium, 3: Low)
+    };
+
+    console.log("Notice add payload:", payload);
+    // TODO: Replace with actual Notice Add Flow URL
+    const response = await fetch('https://api.worqhat.com/flows/trigger/c91c97ce-7dc2-4a10-a71d-3b6fb3b864cc', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY_ANUSH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Notice add response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Notice add error:", error);
+    res.status(500).json({ message: "Notice add failed" });
+  }
+});
+
+// Admin notice fetch route
+router.post("/notice-fetch-admin", async (req, res) => {
+  try {
+    const payload = {
+      operation: 'fetch-admin'
+    };
+
+    console.log("Admin notice fetch payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/c91c97ce-7dc2-4a10-a71d-3b6fb3b864cc', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY_ANUSH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Admin notice fetch response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Admin notice fetch error:", error);
+    res.status(500).json({ message: "Admin notice fetch failed" });
+  }
+});
+
+// Notice approve route
+router.post("/notice-approve", async (req, res) => {
+  try {
+    const { title } = req.body;
+
+    const payload = {
+      operation: 'approve',
+      title: title ? title.trim() : title
+    };
+
+    console.log("Notice approve payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/c91c97ce-7dc2-4a10-a71d-3b6fb3b864cc', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY_ANUSH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Notice approve response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Notice approve error:", error);
+    res.status(500).json({ message: "Notice approve failed" });
+  }
+});
+
+// Notice fetch request (for approved notices)
+router.post("/notice-fetch", async (req, res) => {
+  try {
+    const payload = {
+      operation: 'fetch'
+    };
+
+    console.log("Approved notice fetch payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/c91c97ce-7dc2-4a10-a71d-3b6fb3b864cc', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY_ANUSH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Approved notice fetch response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Approved notice fetch error:", error);
+    res.status(500).json({ message: "Approved notice fetch failed" });
+  }
+});
+
+// Notice delete route
+router.post("/notice-delete", async (req, res) => {
+  try {
+    const { title } = req.body;
+
+    const payload = {
+      operation: 'delete',
+      title: title ? title.trim() : title
+    };
+
+    console.log("Notice delete payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/c91c97ce-7dc2-4a10-a71d-3b6fb3b864cc', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY_ANUSH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Notice delete response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Notice delete error:", error);
+    res.status(500).json({ message: "Notice delete failed" });
   }
 });
 

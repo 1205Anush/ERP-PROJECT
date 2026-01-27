@@ -30,10 +30,10 @@ const StudentDashboard: React.FC = () => {
       if (response.ok && result.data && result.data.data) {
         const apiData = result.data.data;
 
-        // Extract arrays (same logic as StudentNotices and AdminNotices)
+        // Extract arrays
         const titleArray = apiData.title || [];
         const contentArray = apiData.content || [];
-        const priorityArray = apiData.priority ? apiData.priority.map((p: string) => parseInt(p)) : [];
+        const priorityArray = apiData.priority ? apiData.priority.map((p: string | number) => typeof p === 'string' ? parseInt(p) : p) : [];
 
         // Combine arrays into notice objects
         const notices: ApiNotice[] = [];

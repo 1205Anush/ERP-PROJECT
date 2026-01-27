@@ -39,10 +39,10 @@ const AdminNotices: React.FC = () => {
       if (response.ok && result.data && result.data.data) {
         const apiData = result.data.data;
 
-        // Extract arrays directly (they're already arrays, not comma-separated strings)
+        // Extract arrays directly
         const titleArray = apiData.title || [];
         const contentArray = apiData.content || [];
-        const priorityArray = apiData.priority ? apiData.priority.map((p: string) => parseInt(p)) : [];
+        const priorityArray = apiData.priority ? apiData.priority.map((p: string | number) => typeof p === 'string' ? parseInt(p) : p) : [];
 
         console.log('Title array:', titleArray);
         console.log('Content array:', contentArray);
@@ -87,7 +87,7 @@ const AdminNotices: React.FC = () => {
 
         const titleArray = apiData.title || [];
         const contentArray = apiData.content || [];
-        const priorityArray = apiData.priority ? apiData.priority.map((p: string) => parseInt(p)) : [];
+        const priorityArray = apiData.priority ? apiData.priority.map((p: string | number) => typeof p === 'string' ? parseInt(p) : p) : [];
 
         const notices: ApprovedNotice[] = [];
         const maxLength = Math.max(titleArray.length, contentArray.length, priorityArray.length);
