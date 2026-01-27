@@ -255,6 +255,39 @@ router.post("/notice-delete", async (req, res) => {
   }
 });
 
+// Marks management route (display students or add marks)
+router.post("/marks-management", async (req, res) => {
+  try {
+    const { operation, course, exam, marks, student } = req.body;
+
+    const payload = {
+      operation,
+      course,
+      exam,
+      marks,
+      student
+    };
+
+    console.log("Marks management payload:", payload);
+    // Using the General Flow URL from .env or a specific one if provided
+    const response = await fetch('https://api.worqhat.com/flows/trigger/103d61d7-1476-4e0a-bac0-26ef9e490ebd', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Marks management response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Marks management error:", error);
+    res.status(500).json({ message: "Marks management failed" });
+  }
+});
+
 module.exports = router;
 
 

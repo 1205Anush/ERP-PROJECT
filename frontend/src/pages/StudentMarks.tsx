@@ -1,212 +1,276 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const StudentMarks: React.FC = () => {
-  const [students] = useState([
-    { id: 1, name: 'Alice Johnson', rollNumber: '101', email: 'alice@example.com' },
-    { id: 2, name: 'Bob Smith', rollNumber: '102', email: 'bob@example.com' },
-    { id: 3, name: 'Charlie Brown', rollNumber: '103', email: 'charlie@example.com' },
-    { id: 4, name: 'Diana Prince', rollNumber: '104', email: 'diana@example.com' }
-  ]);
+  const courses = ['C101', 'C102', 'C103', 'C104', 'C105'];
+  const examTypes = ['midsem', 'endsem', 'internal'];
 
-  const [marks, setMarks] = useState<{[key: string]: number}>({});
-  const [selectedCourse, setSelectedCourse] = useState('CS101');
-  const [selectedExam, setSelectedExam] = useState('Mid-term');
+  const [selectedCourse, setSelectedCourse] = useState(courses[0]);
+  const [selectedExam, setSelectedExam] = useState(examTypes[0]);
+  const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [marks, setMarks] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
   const [maxMarks, setMaxMarks] = useState(100);
 
-  const courses = ['CS101', 'CS102', 'MATH101', 'PHY101'];
-  const examTypes = ['Quiz', 'Mid-term', 'Final', 'Assignment'];
+  // Fetch students when course changes
+  useEffect(() => {
+    fetchStudents();
+  }, [selectedCourse]);
 
-  const handleMarksChange = (studentId: number, value: string) => {
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching students for course:', selectedCourse);
+      const response = await fetch('http://localhost:5000/api/flows/marks-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'display',
+          course: selectedCourse
+        })
+      });
+
+      const result = await response.json();
+      console.log('Display students full result:', JSON.stringify(result, null, 2));
+
+      if (response.ok && result.data) {
+        // Try all possible nesting levels based on common WorqHat responses
+        let data = result.data;
+        if (data.data) data = data.data; // Handle result.data.data
+        if (data.data) data = data.data; // Handle result.data.data.data
+
+        console.log('Extracted data for students:', data);
+
+        // Look for the student id array
+        const ids = Array.isArray(data) ? data :
+          Array.isArray(data.student_ids) ? data.student_ids :
+            Array.isArray(data.student) ? data.student :
+              [];
+
+        setStudentIds(ids.map((id: any) => String(id)));
+      } else {
+        console.warn('Response not OK or no data:', response.status, result);
+        setStudentIds([]);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      setStudentIds([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarksChange = (studentId: string, value: string) => {
     const key = `${studentId}-${selectedCourse}-${selectedExam}`;
-    const numValue = parseFloat(value) || 0;
-    if (numValue >= 0 && numValue <= maxMarks) {
+    if (value === '' || (parseFloat(value) >= 0 && parseFloat(value) <= maxMarks)) {
       setMarks(prev => ({
         ...prev,
-        [key]: numValue
+        [key]: value
       }));
     }
   };
 
-  const getMarks = (studentId: number) => {
+  const getMarksValue = (studentId: string) => {
     const key = `${studentId}-${selectedCourse}-${selectedExam}`;
     return marks[key] || '';
   };
 
-  const saveMarks = () => {
-    console.log('Saving marks:', { course: selectedCourse, exam: selectedExam, marks });
-    alert('Marks saved successfully!');
+  const handleSaveIndividual = async (studentId: string) => {
+    const value = getMarksValue(studentId);
+    if (value === '') {
+      alert(`Please enter marks for student ${studentId}`);
+      return;
+    }
+
+    try {
+      const payload = {
+        operation: 'add',
+        course: selectedCourse,
+        exam: selectedExam,
+        marks: value,
+        student: studentId
+      };
+
+      console.log('Saving marks payload:', payload);
+      const response = await fetch('http://localhost:5000/api/flows/marks-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        alert(`Marks for student ${studentId} saved successfully!`);
+      } else {
+        alert('Failed to save marks.');
+      }
+    } catch (error) {
+      console.error('Error saving marks:', error);
+      alert('Error saving marks.');
+    }
   };
-
-  const getGrade = (marks: number, maxMarks: number) => {
-    const percentage = (marks / maxMarks) * 100;
-    if (percentage >= 90) return { grade: 'A+', color: '#27ae60' };
-    if (percentage >= 80) return { grade: 'A', color: '#2ecc71' };
-    if (percentage >= 70) return { grade: 'B+', color: '#f39c12' };
-    if (percentage >= 60) return { grade: 'B', color: '#e67e22' };
-    if (percentage >= 50) return { grade: 'C', color: '#e74c3c' };
-    return { grade: 'F', color: '#c0392b' };
-  };
-
-  const calculateStats = () => {
-    const currentMarks = students.map(student => {
-      const key = `${student.id}-${selectedCourse}-${selectedExam}`;
-      return marks[key] || 0;
-    }).filter(mark => mark > 0);
-
-    if (currentMarks.length === 0) return null;
-
-    const total = currentMarks.reduce((sum, mark) => sum + mark, 0);
-    const average = total / currentMarks.length;
-    const highest = Math.max(...currentMarks);
-    const lowest = Math.min(...currentMarks);
-
-    return { average, highest, lowest, submitted: currentMarks.length };
-  };
-
-  const stats = calculateStats();
 
   return (
-    <div>
-      <h2 style={{ color: '#2c3e50', marginBottom: '30px' }}>Student Marks Management</h2>
+    <div style={{ padding: '20px', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
+      <h2 style={{ color: '#2c3e50', marginBottom: '30px', fontWeight: 'bold' }}>Examination Marks Entry</h2>
 
-      {/* Selection Controls */}
-      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Course</label>
-            <select
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
-            >
-              {courses.map(course => (
-                <option key={course} value={course}>{course}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Exam Type</label>
-            <select
-              value={selectedExam}
-              onChange={(e) => setSelectedExam(e.target.value)}
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
-            >
-              {examTypes.map(exam => (
-                <option key={exam} value={exam}>{exam}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Maximum Marks</label>
-            <input
-              type="number"
-              min="10"
-              max="200"
-              value={maxMarks}
-              onChange={(e) => setMaxMarks(parseInt(e.target.value) || 100)}
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
-            />
-          </div>
+      {/* Selection Panel */}
+      <div style={{
+        backgroundColor: 'white',
+        padding: '25px',
+        borderRadius: '12px',
+        marginBottom: '30px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '20px',
+        alignItems: 'end'
+      }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Select Course</label>
+          <select
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ced4da',
+              borderRadius: '8px',
+              backgroundColor: '#fff',
+              fontSize: '15px'
+            }}
+          >
+            {courses.map(course => (
+              <option key={course} value={course}>{course}</option>
+            ))}
+          </select>
         </div>
-        
-        <button
-          onClick={saveMarks}
-          style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        >
-          Save All Marks
-        </button>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Select Exam Type</label>
+          <select
+            value={selectedExam}
+            onChange={(e) => setSelectedExam(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ced4da',
+              borderRadius: '8px',
+              backgroundColor: '#fff',
+              fontSize: '15px'
+            }}
+          >
+            {examTypes.map(exam => (
+              <option key={exam} value={exam}>{exam}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Max Marks</label>
+          <input
+            type="number"
+            value={maxMarks}
+            onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ced4da',
+              borderRadius: '8px',
+              fontSize: '15px'
+            }}
+          />
+        </div>
       </div>
 
-      {/* Statistics */}
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
-          <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#3498db' }}>Average</h4>
-            <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{stats.average.toFixed(1)}</p>
-          </div>
-          <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#27ae60' }}>Highest</h4>
-            <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{stats.highest}</p>
-          </div>
-          <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#e74c3c' }}>Lowest</h4>
-            <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{stats.lowest}</p>
-          </div>
-          <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#f39c12' }}>Submitted</h4>
-            <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{stats.submitted}/{students.length}</p>
-          </div>
+      {/* Students List */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '20px',
+          backgroundColor: '#3498db',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h3 style={{ margin: 0 }}>Student IDs for {selectedCourse}</h3>
+          <span style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '14px' }}>
+            {studentIds.length} Students Found
+          </span>
         </div>
-      )}
 
-      {/* Marks Entry Table */}
-      <div style={{ backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
-          <h3 style={{ margin: 0, color: '#2c3e50' }}>
-            {selectedExam} Marks - {selectedCourse} (Max: {maxMarks})
-          </h3>
-        </div>
-        
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f8f9fa' }}>
-              <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Roll No.</th>
-              <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Student Name</th>
-              <th style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>Marks</th>
-              <th style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>Percentage</th>
-              <th style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map(student => {
-              const studentMarks = getMarks(student.id);
-              const numMarks = parseFloat(studentMarks.toString()) || 0;
-              const percentage = numMarks > 0 ? ((numMarks / maxMarks) * 100).toFixed(1) : '0';
-              const gradeInfo = numMarks > 0 ? getGrade(numMarks, maxMarks) : { grade: '-', color: '#95a5a6' };
-              
-              return (
-                <tr key={student.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                  <td style={{ padding: '15px', fontWeight: 'bold' }}>{student.rollNumber}</td>
-                  <td style={{ padding: '15px' }}>{student.name}</td>
-                  <td style={{ padding: '15px', textAlign: 'center' }}>
-                    <input
-                      type="number"
-                      min="0"
-                      max={maxMarks}
-                      step="0.5"
-                      value={studentMarks}
-                      onChange={(e) => handleMarksChange(student.id, e.target.value)}
-                      placeholder="0"
-                      style={{
-                        width: '80px',
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        textAlign: 'center'
-                      }}
-                    />
-                    <span style={{ marginLeft: '5px', color: '#7f8c8d' }}>/ {maxMarks}</span>
-                  </td>
-                  <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>
-                    {percentage}%
-                  </td>
-                  <td style={{ padding: '15px', textAlign: 'center' }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      backgroundColor: gradeInfo.color + '20',
-                      color: gradeInfo.color
-                    }}>
-                      {gradeInfo.grade}
-                    </span>
-                  </td>
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading student IDs...</div>
+        ) : studentIds.length > 0 ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #edf2f7' }}>
+                  <th style={{ padding: '15px', textAlign: 'left', color: '#718096' }}>Student ID</th>
+                  <th style={{ padding: '15px', textAlign: 'center', color: '#718096' }}>Marks</th>
+                  <th style={{ padding: '15px', textAlign: 'right', color: '#718096' }}>Action</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {studentIds.map(id => {
+                  const m = getMarksValue(id);
+
+                  return (
+                    <tr key={id} style={{ borderBottom: '1px solid #edf2f7' }}>
+                      <td style={{ padding: '15px', fontWeight: 'bold', color: '#2d3748' }}>{id}</td>
+                      <td style={{ padding: '15px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <input
+                            type="number"
+                            value={m}
+                            onChange={(e) => handleMarksChange(id, e.target.value)}
+                            placeholder="0.0"
+                            style={{
+                              width: '80px',
+                              padding: '8px',
+                              border: '1px solid #cbd5e0',
+                              borderRadius: '6px',
+                              textAlign: 'center'
+                            }}
+                          />
+                          <span style={{ color: '#a0aec0' }}>/ {maxMarks}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '15px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleSaveIndividual(id)}
+                          style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#2ecc71',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#27ae60'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2ecc71'}
+                        >
+                          Save Marks
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>
+            <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔍</div>
+            No students found for this course.
+          </div>
+        )}
       </div>
     </div>
   );
