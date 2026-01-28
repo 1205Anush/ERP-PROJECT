@@ -111,30 +111,22 @@ const AdminNotices: React.FC = () => {
   const handleApprove = async (noticeIndex: number) => {
     try {
       const notice = pendingRequests[noticeIndex];
-      console.log('Approving notice:', notice);
+      console.log('Approving notice:', notice.title);
 
       const response = await fetch('http://localhost:5000/api/flows/notice-approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: notice.title,
-          content: notice.content,
-          priority: notice.priority,
-          index: notice.index
-        })
+        body: JSON.stringify({ title: notice.title })
       });
 
       const result = await response.json();
-      console.log('Approval response:', result);
 
-      if (response.ok && result.success && result.data && result.data.success) {
+      if (response.ok && result.success) {
         alert('Notice approved successfully!');
-        // Only refresh data after confirmed backend success
-        await fetchPendingRequests();
-        await fetchApprovedNotices();
+        fetchPendingRequests();
+        fetchApprovedNotices();
       } else {
-        console.error('Approval failed:', result);
-        alert('Failed to approve notice. Backend did not confirm approval.');
+        alert('Failed to approve notice.');
       }
     } catch (error) {
       console.error('Error approving notice:', error);
@@ -145,29 +137,21 @@ const AdminNotices: React.FC = () => {
   const handleDelete = async (noticeIndex: number) => {
     try {
       const notice = approvedNotices[noticeIndex];
-      console.log('Deleting notice:', notice);
+      console.log('Deleting notice:', notice.title);
 
       const response = await fetch('http://localhost:5000/api/flows/notice-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: notice.title,
-          content: notice.content,
-          priority: notice.priority,
-          index: notice.index
-        })
+        body: JSON.stringify({ title: notice.title })
       });
 
       const result = await response.json();
-      console.log('Delete response:', result);
 
-      if (response.ok && result.success && result.data?.success && result.data?.statusCode === '200') {
+      if (response.ok && result.success) {
         alert('Notice deleted successfully!');
-        // Only refresh data after confirmed backend success
-        await fetchApprovedNotices();
+        fetchApprovedNotices();
       } else {
-        console.error('Delete failed:', result);
-        alert('Failed to delete notice. Backend did not confirm deletion.');
+        alert('Failed to delete notice.');
       }
     } catch (error) {
       console.error('Error deleting notice:', error);
