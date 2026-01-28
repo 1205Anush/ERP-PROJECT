@@ -5,7 +5,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => Promise<boolean>;
   logout: () => void;
-  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => Promise<boolean>;
+  signup: (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +23,11 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Initialize user from localStorage on app start
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const login = async (
     email: string,
@@ -64,6 +68,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           department: 'Computer Science',
           semester: role === 'student' ? 4 : undefined
         });
+        
+        // Save user to localStorage
+        localStorage.setItem('user', JSON.stringify({
+          id: email,
+          name: email.split('@')[0],
+          email,
+          role,
+          rollNumber: role === 'student' ? 'CS2021001' : undefined,
+          department: 'Computer Science',
+          semester: role === 'student' ? 4 : undefined
+        }));
         return true;
       } else {
         console.warn('LOGIN FAILED:', workflowResult.message || 'Unknown error');
@@ -78,9 +93,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('user');
   };
 
-  const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher'): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department'): Promise<boolean> => {
     try {
       const response = await fetch('http://localhost:5000/api/flows/register', {
         method: 'POST',
@@ -102,6 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           semester: role === 'student' ? 4 : undefined
         };
         setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
         return true;
       } else {
         console.warn('REGISTRATION FAILED:', data);
