@@ -111,20 +111,29 @@ const AdminNotices: React.FC = () => {
   const handleApprove = async (noticeIndex: number) => {
     try {
       const notice = pendingRequests[noticeIndex];
-      console.log('Approving notice:', notice.title);
+      console.log('Approving notice:', notice);
 
       const response = await fetch('http://localhost:5000/api/flows/notice-approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: notice.title })
+        body: JSON.stringify({
+          title: notice.title,
+          content: notice.content,
+          priority: notice.priority,
+          action: 'approve'
+        })
       });
 
       const result = await response.json();
+      console.log('Approve response:', result);
 
       if (response.ok && result.success) {
+        // Wait a moment for database to update, then refresh from server
+        setTimeout(() => {
+          fetchPendingRequests();
+          fetchApprovedNotices();
+        }, 1000);
         alert('Notice approved successfully!');
-        fetchPendingRequests();
-        fetchApprovedNotices();
       } else {
         alert('Failed to approve notice.');
       }
@@ -148,8 +157,11 @@ const AdminNotices: React.FC = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Wait a moment for database to update, then refresh from server
+        setTimeout(() => {
+          fetchApprovedNotices();
+        }, 1000);
         alert('Notice deleted successfully!');
-        fetchApprovedNotices();
       } else {
         alert('Failed to delete notice.');
       }

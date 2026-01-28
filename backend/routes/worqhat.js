@@ -174,11 +174,14 @@ router.post("/notice-fetch-admin", async (req, res) => {
 // Notice approve route
 router.post("/notice-approve", async (req, res) => {
   try {
-    const { title } = req.body;
+    const { title, content, priority, action } = req.body;
 
     const payload = {
       operation: 'approve',
-      title: title ? title.trim() : title
+      title: title ? title.trim() : '',
+      content: content ? content.trim() : '',
+      priority: priority || 2,
+      action: action ? action.trim() : 'approve'
     };
 
     console.log("Notice approve payload:", payload);
