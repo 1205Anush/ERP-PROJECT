@@ -291,6 +291,37 @@ router.post("/marks-management", async (req, res) => {
   }
 });
 
+// Attendance management route
+router.post("/attendance-management", async (req, res) => {
+  try {
+    const { operation, course_id, student_id, attendance } = req.body;
+
+    const payload = {
+      operation,
+      course_id,
+      student_id,
+      attendance
+    };
+
+    console.log("Attendance management payload:", payload);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/cec28aa2-e35f-4d72-8e30-9b075c68d1df', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Attendance management response:", JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Attendance management error:", error);
+    res.status(500).json({ message: "Attendance management failed" });
+  }
+});
+
 module.exports = router;
 
 

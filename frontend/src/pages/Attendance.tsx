@@ -1,126 +1,255 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface Student {
+  id: string; // Roll number
+}
 
 const Attendance: React.FC = () => {
-  const [students] = useState([
-    { id: 1, name: 'Alice Johnson', rollNumber: '101', email: 'alice@example.com' },
-    { id: 2, name: 'Bob Smith', rollNumber: '102', email: 'bob@example.com' },
-    { id: 3, name: 'Charlie Brown', rollNumber: '103', email: 'charlie@example.com' },
-    { id: 4, name: 'Diana Prince', rollNumber: '104', email: 'diana@example.com' }
-  ]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
 
-  const [attendance, setAttendance] = useState<{[key: number]: 'present' | 'absent' | 'late'}>({});
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedCourse, setSelectedCourse] = useState('CS101');
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
-  const courses = ['CS101', 'CS102', 'CS103', 'MATH101', 'PHY101'];
+  useEffect(() => {
+    if (selectedCourse) {
+      fetchStudents(selectedCourse);
+    } else {
+      setStudentIds([]);
+    }
+  }, [selectedCourse]);
 
-  const handleAttendanceChange = (studentId: number, status: 'present' | 'absent' | 'late') => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: status
-    }));
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/attendance-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operation: 'fetch' })
+      });
+      const result = await response.json();
+      console.log('Courses fetch result:', result);
+
+      if (response.ok && result.data) {
+        let data = result.data;
+        if (data.data) data = data.data;
+        if (data.data) data = data.data;
+
+        // Extract course codes/ids from the response
+        // Assuming result.data.data contains the array
+        const list = Array.isArray(data) ? data :
+          Array.isArray(data.id) ? data.id :
+            Array.isArray(data.courses) ? data.courses :
+              Array.isArray(data.course_id) ? data.course_id :
+                [];
+        setCourses(list.map((c: any) => String(c)));
+        if (list.length > 0) setSelectedCourse(String(list[0]));
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const saveAttendance = () => {
-    console.log('Saving attendance:', { date: selectedDate, course: selectedCourse, attendance });
-    alert('Attendance saved successfully!');
+  const fetchStudents = async (courseId: string) => {
+    setLoadingStudents(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/attendance-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'fetch-student',
+          course_id: courseId
+        })
+      });
+      const result = await response.json();
+      console.log('Students fetch result:', result);
+
+      if (response.ok && result.data) {
+        let data = result.data;
+        if (data.data) data = data.data;
+        if (data.data) data = data.data;
+
+        const list = Array.isArray(data) ? data :
+          Array.isArray(data.student_ids) ? data.student_ids :
+            Array.isArray(data.student) ? data.student :
+              [];
+        setStudentIds(list.map((s: any) => String(s)));
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setLoadingStudents(false);
+    }
   };
 
-  const markAllPresent = () => {
-    const allPresent = students.reduce((acc, student) => ({
-      ...acc,
-      [student.id]: 'present' as const
-    }), {});
-    setAttendance(allPresent);
+  const markAttendance = async (studentId: string, status: 'present' | 'absent') => {
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/attendance-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'attendance',
+          student_id: studentId,
+          course_id: selectedCourse,
+          attendance: status
+        })
+      });
+      const result = await response.json();
+      if (response.ok && (result.success || result.data?.success)) {
+        alert(`${status.charAt(0).toUpperCase() + status.slice(1)} marked for ${studentId}`);
+      } else {
+        alert('Failed to mark attendance');
+      }
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      alert('Error marking attendance');
+    }
   };
 
   return (
-    <div>
-      <h2 style={{ color: '#2c3e50', marginBottom: '30px' }}>Attendance Management</h2>
+    <div style={{ padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <h2 style={{ color: '#1e293b', marginBottom: '32px', fontWeight: '600', letterSpacing: '-0.025em' }}>Attendance Management</h2>
 
-      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+        {/* Selection Panel */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '24px',
+          borderRadius: '8px',
+          marginBottom: '32px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '24px',
+          alignItems: 'end'
+        }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Date</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Course</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>Select Course</label>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                fontSize: '15px',
+                color: '#1e293b',
+                outline: 'none'
+              }}
+              disabled={loading}
             >
+              <option value="">Choose a course</option>
               {courses.map(course => (
                 <option key={course} value={course}>{course}</option>
               ))}
             </select>
           </div>
+          <div style={{ color: '#94a3b8', fontSize: '14px', fontStyle: 'italic' }}>
+            {loading ? 'Loading courses...' : ''}
+          </div>
         </div>
-        
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <button
-            onClick={markAllPresent}
-            style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Mark All Present
-          </button>
-          <button
-            onClick={saveAttendance}
-            style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            Save Attendance
-          </button>
-        </div>
-      </div>
 
-      <div style={{ backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f8f9fa' }}>
-              <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Roll No.</th>
-              <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Student Name</th>
-              <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Email</th>
-              <th style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>Attendance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map(student => (
-              <tr key={student.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                <td style={{ padding: '15px' }}>{student.rollNumber}</td>
-                <td style={{ padding: '15px' }}>{student.name}</td>
-                <td style={{ padding: '15px' }}>{student.email}</td>
-                <td style={{ padding: '15px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                    {(['present', 'absent', 'late'] as const).map(status => (
-                      <label key={status} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          name={`attendance-${student.id}`}
-                          value={status}
-                          checked={attendance[student.id] === status}
-                          onChange={() => handleAttendanceChange(student.id, status)}
-                        />
-                        <span style={{ 
-                          color: status === 'present' ? '#27ae60' : status === 'absent' ? '#e74c3c' : '#f39c12',
-                          fontWeight: 'bold',
-                          textTransform: 'capitalize'
-                        }}>
-                          {status}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Students List */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            padding: '16px 24px',
+            backgroundColor: '#f1f5f9',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#334155' }}>Enrolled Students</h3>
+            <span style={{ fontSize: '14px', color: '#64748b' }}>
+              {loadingStudents ? 'Loading...' : `${studentIds.length} found`}
+            </span>
+          </div>
+
+          {loadingStudents ? (
+            <div style={{ padding: '64px', textAlign: 'center', color: '#94a3b8' }}>Fetching students...</div>
+          ) : studentIds.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'white' }}>
+                    <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Student ID</th>
+                    <th style={{ padding: '16px 24px', textAlign: 'right', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Mark Attendance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {studentIds.map(id => (
+                    <tr key={id} style={{ transition: 'background-color 0.2s', borderBottom: '1px solid #f1f5f9' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      <td style={{ padding: '16px 24px', fontWeight: '500', color: '#1e293b' }}>{id}</td>
+                      <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => markAttendance(id, 'present')}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: '#334155',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                          >
+                            Present
+                          </button>
+                          <button
+                            onClick={() => markAttendance(id, 'absent')}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: 'white',
+                              color: '#64748b',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#f1f5f9';
+                              e.currentTarget.style.borderColor = '#cbd5e1';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'white';
+                              e.currentTarget.style.borderColor = '#e2e8f0';
+                            }}
+                          >
+                            Absent
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ padding: '80px 24px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>
+              {selectedCourse ? 'No students found for this course.' : 'Please select a course to view students.'}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

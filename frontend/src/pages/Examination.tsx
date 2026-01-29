@@ -1,14 +1,95 @@
-import React, { useState } from 'react';
-import { mockCourses, mockExamResults, mockSubjectMarks } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { mockCourses, mockExamResults } from '../data/mockData';
+
+interface SubjectMark {
+  subject: string;
+  internal: string;
+  midsem: string;
+  endsem: string;
+  total: number;
+  grade: string;
+}
 
 const Examination: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'registration' | 'results' | 'marks'>('registration');
   const [selectedExamCourses, setSelectedExamCourses] = useState<string[]>([]);
   const [registeredExamCourses, setRegisteredExamCourses] = useState<string[]>(['1', '2', '3']);
+  const [subjectMarks, setSubjectMarks] = useState<SubjectMark[]>([]);
+  const [loadingMarks, setLoadingMarks] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'marks' && user?.rollNumber) {
+      fetchStudentMarks();
+    }
+  }, [activeTab, user?.rollNumber]);
+
+  const fetchStudentMarks = async () => {
+    setLoadingMarks(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/flows/marks-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'fetch',
+          student: user?.rollNumber
+        })
+      });
+
+      const result = await response.json();
+      console.log('Student marks fetch result:', result);
+
+      if (response.ok && result.data) {
+        let data = result.data;
+        if (data.data) data = data.data; // Handle nesting
+        if (data.data) data = data.data;
+
+        // Assuming data contains: course_id[], midsem[], endsem[], internal[]
+        const courseIds = data.course_id || [];
+        const midsemMarks = data.midsem || [];
+        const endsemMarks = data.endsem || [];
+        const internalMarks = data.internal || [];
+
+        const combined: SubjectMark[] = [];
+        const maxLength = Math.max(courseIds.length, midsemMarks.length, endsemMarks.length, internalMarks.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          const mid = parseFloat(midsemMarks[i]) || 0;
+          const end = parseFloat(endsemMarks[i]) || 0;
+          const int = parseFloat(internalMarks[i]) || 0;
+          const total = mid + end + int;
+
+          combined.push({
+            subject: courseIds[i] || 'Unknown',
+            midsem: midsemMarks[i] || '0',
+            endsem: endsemMarks[i] || '0',
+            internal: internalMarks[i] || '0',
+            total: total,
+            grade: calculateGrade(total)
+          });
+        }
+        setSubjectMarks(combined);
+      }
+    } catch (error) {
+      console.error('Error fetching student marks:', error);
+    } finally {
+      setLoadingMarks(false);
+    }
+  };
+
+  const calculateGrade = (total: number) => {
+    if (total >= 90) return 'A+';
+    if (total >= 80) return 'A';
+    if (total >= 70) return 'B+';
+    if (total >= 60) return 'B';
+    if (total >= 50) return 'C';
+    return 'F';
+  };
 
   const handleExamCourseSelection = (courseId: string) => {
-    setSelectedExamCourses(prev => 
-      prev.includes(courseId) 
+    setSelectedExamCourses(prev =>
+      prev.includes(courseId)
         ? prev.filter(id => id !== courseId)
         : [...prev, courseId]
     );
@@ -20,238 +101,221 @@ const Examination: React.FC = () => {
     alert('Exam registration successful!');
   };
 
-  const TabButton: React.FC<{ id: string; label: string; icon: string }> = ({ id, label, icon }) => (
+  const TabButton: React.FC<{ id: string; label: string }> = ({ id, label }) => (
     <button
       onClick={() => setActiveTab(id as any)}
       style={{
-        padding: '12px 20px',
+        padding: '12px 24px',
         border: 'none',
-        backgroundColor: activeTab === id ? '#3498db' : '#ecf0f1',
-        color: activeTab === id ? 'white' : '#2c3e50',
-        borderRadius: '5px',
+        backgroundColor: activeTab === id ? '#334155' : 'transparent',
+        color: activeTab === id ? 'white' : '#64748b',
+        borderRadius: '6px',
         cursor: 'pointer',
-        fontWeight: 'bold',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
+        fontWeight: '500',
+        transition: 'all 0.2s ease',
+        fontSize: '14px'
       }}
     >
-      <span>{icon}</span>
       {label}
     </button>
   );
 
   return (
-    <div>
-      <div style={{ marginBottom: '30px' }}>
-        <h2 style={{ color: '#2c3e50', margin: 0 }}>Examination</h2>
-        <p style={{ color: '#7f8c8d', margin: '5px 0 0 0' }}>
-          Manage exam registrations, view results and detailed marks
-        </p>
-      </div>
+    <div style={{ padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '40px' }}>
+          <h2 style={{ color: '#1e293b', margin: 0, fontWeight: '600', fontSize: '28px', letterSpacing: '-0.025em' }}>Examination</h2>
+          <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '15px' }}>
+            Manage registrations, results and marks details
+          </p>
+        </div>
 
-      {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
-        <TabButton id="registration" label="Exam Registration" icon="📝" />
-        <TabButton id="results" label="Exam Results" icon="📊" />
-        <TabButton id="marks" label="Marks Details" icon="📋" />
-      </div>
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          marginBottom: '32px',
+          backgroundColor: '#f1f5f9',
+          padding: '4px',
+          borderRadius: '8px',
+          width: 'fit-content'
+        }}>
+          <TabButton id="registration" label="Registration" />
+          <TabButton id="results" label="Results Summary" />
+          <TabButton id="marks" label="Detailed Marks" />
+        </div>
 
-      {/* Tab Content */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '30px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        {/* Exam Registration Tab */}
-        {activeTab === 'registration' && (
-          <div>
-            <h3 style={{ marginBottom: '20px', color: '#2c3e50' }}>Register for Examinations</h3>
-            
-            <div style={{ marginBottom: '30px' }}>
-              {mockCourses.map(course => (
-                <div key={course.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px',
-                  border: '1px solid #ecf0f1',
-                  borderRadius: '8px',
-                  marginBottom: '10px',
-                  backgroundColor: registeredExamCourses.includes(course.id) ? '#d5f4e6' : 'white'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedExamCourses.includes(course.id) || registeredExamCourses.includes(course.id)}
-                    onChange={() => handleExamCourseSelection(course.id)}
-                    disabled={registeredExamCourses.includes(course.id)}
-                    style={{ marginRight: '15px', transform: 'scale(1.2)' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{course.name}</div>
-                    <div style={{ color: '#7f8c8d', fontSize: '14px' }}>
-                      Course Code: {course.code} | Credits: {course.credits}
-                    </div>
-                  </div>
-                  {registeredExamCourses.includes(course.id) && (
-                    <div style={{
-                      padding: '4px 12px',
-                      backgroundColor: '#27ae60',
-                      color: 'white',
-                      borderRadius: '15px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      Registered
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+        {/* Tab Content */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
+          border: '1px solid #f1f5f9'
+        }}>
+          {activeTab === 'registration' && (
+            <div>
+              <h3 style={{ marginBottom: '24px', color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>Exam Registration</h3>
 
-            {selectedExamCourses.length > 0 && (
-              <div style={{ textAlign: 'center' }}>
-                <button
-                  onClick={handleExamRegistration}
-                  style={{
-                    padding: '12px 30px',
-                    backgroundColor: '#e67e22',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    fontSize: '16px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Register for Exams ({selectedExamCourses.length})
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Exam Results Tab */}
-        {activeTab === 'results' && (
-          <div>
-            <h3 style={{ marginBottom: '20px', color: '#2c3e50' }}>Examination Results Summary</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-              {mockExamResults.map(result => (
-                <div key={result.semester} style={{
-                  padding: '20px',
-                  border: '1px solid #ecf0f1',
-                  borderRadius: '10px',
-                  textAlign: 'center',
-                  backgroundColor: '#f8f9fa'
-                }}>
-                  <h4 style={{ margin: '0 0 15px 0', color: '#2c3e50' }}>
-                    Semester {result.semester}
-                  </h4>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '10px' }}>
-                    {result.cgpa}
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '10px' }}>
-                    CGPA
-                  </div>
-                  <div style={{
-                    padding: '5px 15px',
-                    backgroundColor: result.grade === 'A+' ? '#27ae60' : result.grade === 'A' ? '#3498db' : '#f39c12',
-                    color: 'white',
-                    borderRadius: '15px',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    display: 'inline-block'
+              <div style={{ marginBottom: '32px' }}>
+                {mockCourses.map(course => (
+                  <div key={course.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '20px',
+                    border: '1px solid #f1f5f9',
+                    borderRadius: '8px',
+                    marginBottom: '12px',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: registeredExamCourses.includes(course.id) ? '#f8fafc' : 'white'
                   }}>
-                    Grade {result.grade}
+                    <input
+                      type="checkbox"
+                      checked={selectedExamCourses.includes(course.id) || registeredExamCourses.includes(course.id)}
+                      onChange={() => handleExamCourseSelection(course.id)}
+                      disabled={registeredExamCourses.includes(course.id)}
+                      style={{ marginRight: '16px', cursor: 'pointer', width: '18px', height: '18px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', fontSize: '16px', color: '#334155' }}>{course.name}</div>
+                      <div style={{ color: '#94a3b8', fontSize: '14px', marginTop: '2px' }}>
+                        {course.code} | Credits: {course.credits}
+                      </div>
+                    </div>
+                    {registeredExamCourses.includes(course.id) && (
+                      <div style={{
+                        padding: '4px 12px',
+                        backgroundColor: '#f1f5f9',
+                        color: '#64748b',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        Registered
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <div style={{
-              marginTop: '30px',
-              padding: '20px',
-              backgroundColor: '#e8f5e8',
-              borderRadius: '10px',
-              textAlign: 'center'
-            }}>
-              <h4 style={{ margin: '0 0 10px 0', color: '#27ae60' }}>Overall Performance</h4>
-              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#27ae60' }}>
-                Cumulative CGPA: {(mockExamResults.reduce((sum, r) => sum + r.cgpa, 0) / mockExamResults.length).toFixed(2)}
-              </div>
+              {selectedExamCourses.length > 0 && (
+                <div style={{ textAlign: 'center' }}>
+                  <button
+                    onClick={handleExamRegistration}
+                    style={{
+                      padding: '12px 32px',
+                      backgroundColor: '#334155',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '15px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                  >
+                    Complete Registration ({selectedExamCourses.length})
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Marks Details Tab */}
-        {activeTab === 'marks' && (
-          <div>
-            <h3 style={{ marginBottom: '20px', color: '#2c3e50' }}>Subject-wise Marks Details</h3>
-            
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ padding: '15px', textAlign: 'left', borderBottom: '2px solid #ecf0f1' }}>Subject</th>
-                    <th style={{ padding: '15px', textAlign: 'center', borderBottom: '2px solid #ecf0f1' }}>Internal (20)</th>
-                    <th style={{ padding: '15px', textAlign: 'center', borderBottom: '2px solid #ecf0f1' }}>External (80)</th>
-                    <th style={{ padding: '15px', textAlign: 'center', borderBottom: '2px solid #ecf0f1' }}>Total (100)</th>
-                    <th style={{ padding: '15px', textAlign: 'center', borderBottom: '2px solid #ecf0f1' }}>Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockSubjectMarks.map((mark, index) => (
-                    <tr key={index} style={{ borderBottom: '1px solid #ecf0f1' }}>
-                      <td style={{ padding: '15px', fontWeight: 'bold' }}>{mark.subject}</td>
-                      <td style={{ padding: '15px', textAlign: 'center' }}>{mark.internal}</td>
-                      <td style={{ padding: '15px', textAlign: 'center' }}>{mark.external}</td>
-                      <td style={{ padding: '15px', textAlign: 'center', fontWeight: 'bold' }}>{mark.total}</td>
-                      <td style={{ padding: '15px', textAlign: 'center' }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          backgroundColor: mark.grade.includes('+') ? '#27ae60' : mark.grade === 'A' ? '#3498db' : '#f39c12',
-                          color: 'white',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          {mark.grade}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {activeTab === 'results' && (
+            <div>
+              <h3 style={{ marginBottom: '24px', color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>Results Summary</h3>
 
-            <div style={{
-              marginTop: '20px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '15px'
-            }}>
-              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
-                  {mockSubjectMarks.reduce((sum, m) => sum + m.total, 0)}
-                </div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Total Marks</div>
-              </div>
-              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#3498db' }}>
-                  {(mockSubjectMarks.reduce((sum, m) => sum + m.total, 0) / (mockSubjectMarks.length * 100) * 100).toFixed(1)}%
-                </div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Percentage</div>
-              </div>
-              <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#27ae60' }}>
-                  8.7
-                </div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>SGPA</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
+                {mockExamResults.map(result => (
+                  <div key={result.semester} style={{
+                    padding: '24px',
+                    border: '1px solid #f1f5f9',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    backgroundColor: '#fafafa'
+                  }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>
+                      Semester {result.semester}
+                    </div>
+                    <div style={{ fontSize: '32px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>
+                      {result.cgpa}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>
+                      CGPA
+                    </div>
+                    <div style={{
+                      marginTop: '20px',
+                      padding: '4px 16px',
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      color: '#475569',
+                      borderRadius: '20px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      display: 'inline-block'
+                    }}>
+                      Grade {result.grade}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeTab === 'marks' && (
+            <div>
+              <h3 style={{ marginBottom: '24px', color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>Marks Details</h3>
+
+              {loadingMarks ? (
+                <div style={{ padding: '64px', textAlign: 'center', color: '#94a3b8' }}>Fetching data...</div>
+              ) : subjectMarks.length > 0 ? (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'white' }}>
+                        <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Subject</th>
+                        <th style={{ padding: '16px 20px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Internal</th>
+                        <th style={{ padding: '16px 20px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Midsem</th>
+                        <th style={{ padding: '16px 20px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Endsem</th>
+                        <th style={{ padding: '16px 20px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Total</th>
+                        <th style={{ padding: '16px 20px', textAlign: 'right', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subjectMarks.map((mark, index) => (
+                        <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: '500', color: '#1e293b' }}>{mark.subject}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'center', color: '#475569' }}>{mark.internal}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'center', color: '#475569' }}>{mark.midsem}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'center', color: '#475569' }}>{mark.endsem}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>{mark.total}</td>
+                          <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              backgroundColor: '#f1f5f9',
+                              color: '#475569',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}>
+                              {mark.grade}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ padding: '64px', textAlign: 'center', color: '#94a3b8' }}>
+                  No marks data available at the moment.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

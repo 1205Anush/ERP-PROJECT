@@ -30,15 +30,12 @@ const StudentMarks: React.FC = () => {
       });
 
       const result = await response.json();
-      console.log('Display students full result:', JSON.stringify(result, null, 2));
 
       if (response.ok && result.data) {
         // Try all possible nesting levels based on common WorqHat responses
         let data = result.data;
         if (data.data) data = data.data; // Handle result.data.data
         if (data.data) data = data.data; // Handle result.data.data.data
-
-        console.log('Extracted data for students:', data);
 
         // Look for the student id array
         const ids = Array.isArray(data) ? data :
@@ -48,7 +45,6 @@ const StudentMarks: React.FC = () => {
 
         setStudentIds(ids.map((id: any) => String(id)));
       } else {
-        console.warn('Response not OK or no data:', response.status, result);
         setStudentIds([]);
       }
     } catch (error) {
@@ -90,7 +86,6 @@ const StudentMarks: React.FC = () => {
         student: studentId
       };
 
-      console.log('Saving marks payload:', payload);
       const response = await fetch('http://localhost:5000/api/flows/marks-management', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,167 +105,179 @@ const StudentMarks: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
-      <h2 style={{ color: '#2c3e50', marginBottom: '30px', fontWeight: 'bold' }}>Examination Marks Entry</h2>
+    <div style={{ padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <h2 style={{ color: '#1e293b', marginBottom: '32px', fontWeight: '600', letterSpacing: '-0.025em' }}>Marks Entry</h2>
 
-      {/* Selection Panel */}
-      <div style={{
-        backgroundColor: 'white',
-        padding: '25px',
-        borderRadius: '12px',
-        marginBottom: '30px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        alignItems: 'end'
-      }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Select Course</label>
-          <select
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ced4da',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              fontSize: '15px'
-            }}
-          >
-            {courses.map(course => (
-              <option key={course} value={course}>{course}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Select Exam Type</label>
-          <select
-            value={selectedExam}
-            onChange={(e) => setSelectedExam(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ced4da',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              fontSize: '15px'
-            }}
-          >
-            {examTypes.map(exam => (
-              <option key={exam} value={exam}>{exam}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#34495e' }}>Max Marks</label>
-          <input
-            type="number"
-            value={maxMarks}
-            onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ced4da',
-              borderRadius: '8px',
-              fontSize: '15px'
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Students List */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-        overflow: 'hidden'
-      }}>
+        {/* Selection Panel */}
         <div style={{
-          padding: '20px',
-          backgroundColor: '#3498db',
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+          backgroundColor: 'white',
+          padding: '24px',
+          borderRadius: '8px',
+          marginBottom: '32px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '24px',
+          alignItems: 'end'
         }}>
-          <h3 style={{ margin: 0 }}>Student IDs for {selectedCourse}</h3>
-          <span style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '14px' }}>
-            {studentIds.length} Students Found
-          </span>
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>Course</label>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                fontSize: '15px',
+                color: '#1e293b',
+                outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+            >
+              {courses.map(course => (
+                <option key={course} value={course}>{course}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>Exam Type</label>
+            <select
+              value={selectedExam}
+              onChange={(e) => setSelectedExam(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                fontSize: '15px',
+                color: '#1e293b',
+                outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+            >
+              {examTypes.map(exam => (
+                <option key={exam} value={exam}>{exam.charAt(0).toUpperCase() + exam.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>Maximum Marks</label>
+            <input
+              type="number"
+              value={maxMarks}
+              onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                fontSize: '15px',
+                color: '#1e293b',
+                outline: 'none'
+              }}
+            />
+          </div>
         </div>
 
-        {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading student IDs...</div>
-        ) : studentIds.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #edf2f7' }}>
-                  <th style={{ padding: '15px', textAlign: 'left', color: '#718096' }}>Student ID</th>
-                  <th style={{ padding: '15px', textAlign: 'center', color: '#718096' }}>Marks</th>
-                  <th style={{ padding: '15px', textAlign: 'right', color: '#718096' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentIds.map(id => {
-                  const m = getMarksValue(id);
+        {/* Students List */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            padding: '16px 24px',
+            backgroundColor: '#f1f5f9',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#334155' }}>Enrolled Students</h3>
+            <span style={{ fontSize: '14px', color: '#64748b' }}>
+              {studentIds.length} found
+            </span>
+          </div>
 
-                  return (
-                    <tr key={id} style={{ borderBottom: '1px solid #edf2f7' }}>
-                      <td style={{ padding: '15px', fontWeight: 'bold', color: '#2d3748' }}>{id}</td>
-                      <td style={{ padding: '15px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <input
-                            type="number"
-                            value={m}
-                            onChange={(e) => handleMarksChange(id, e.target.value)}
-                            placeholder="0.0"
+          {loading ? (
+            <div style={{ padding: '64px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>Loading...</div>
+          ) : studentIds.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'white' }}>
+                    <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Student ID</th>
+                    <th style={{ padding: '16px 24px', textAlign: 'center', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Marks</th>
+                    <th style={{ padding: '16px 24px', textAlign: 'right', fontSize: '13px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {studentIds.map(id => {
+                    const m = getMarksValue(id);
+
+                    return (
+                      <tr key={id} style={{ transition: 'background-color 0.2s', borderBottom: '1px solid #f1f5f9' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                        <td style={{ padding: '16px 24px', fontWeight: '500', color: '#1e293b' }}>{id}</td>
+                        <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                            <input
+                              type="number"
+                              value={m}
+                              onChange={(e) => handleMarksChange(id, e.target.value)}
+                              placeholder="0"
+                              style={{
+                                width: '64px',
+                                padding: '8px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                                outline: 'none',
+                                fontSize: '14px'
+                              }}
+                            />
+                            <span style={{ color: '#94a3b8', fontSize: '14px' }}>/ {maxMarks}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                          <button
+                            onClick={() => handleSaveIndividual(id)}
                             style={{
-                              width: '80px',
-                              padding: '8px',
-                              border: '1px solid #cbd5e0',
-                              borderRadius: '6px',
-                              textAlign: 'center'
+                              padding: '8px 16px',
+                              backgroundColor: '#334155',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              transition: 'background-color 0.2s'
                             }}
-                          />
-                          <span style={{ color: '#a0aec0' }}>/ {maxMarks}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '15px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleSaveIndividual(id)}
-                          style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#2ecc71',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: '600',
-                            transition: 'background 0.2s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#27ae60'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2ecc71'}
-                        >
-                          Save Marks
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>
-            <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔍</div>
-            No students found for this course.
-          </div>
-        )}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                          >
+                            Save
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ padding: '80px 24px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>
+              No students found for this selection.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
