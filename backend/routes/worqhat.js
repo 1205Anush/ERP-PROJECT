@@ -291,6 +291,45 @@ router.post("/marks-management", async (req, res) => {
   }
 });
 
+// Course registration route
+router.post("/course-registration", async (req, res) => {
+  try {
+    const { student_id, course_id, course_name, credits, operation } = req.body;
+
+    // Validate required fields
+    if (!student_id || !course_id || !operation) {
+      return res.status(400).json({ message: "Missing required fields: student_id, course_id, operation" });
+    }
+
+    const payload = {
+      student_id: student_id.toString(),
+      course_id: course_id.toString(),
+      course_name: course_name || '',
+      credits: credits ? credits.toString() : '0',
+      operation: operation.toString()
+    };
+
+    console.log("Course registration payload:", JSON.stringify(payload, null, 2));
+    
+    const response = await fetch('https://api.worqhat.com/flows/trigger/cec28aa2-e35f-4d72-8e30-9b075c68d1df', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Course registration response:", JSON.stringify(data, null, 2));
+    
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Course registration error:", error);
+    res.status(500).json({ message: "Course registration failed", error: error.message });
+  }
+});
+
 // Attendance management route
 router.post("/attendance-management", async (req, res) => {
   try {
