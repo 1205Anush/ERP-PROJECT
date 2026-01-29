@@ -322,6 +322,62 @@ router.post("/attendance-management", async (req, res) => {
   }
 });
 
+// Student profile management route
+router.post("/student-profile", async (req, res) => {
+  try {
+    const {
+      operation,
+      email, // Used for fetch
+      userid, // Used for add
+      phone,
+      date_of_birth,
+      blood_group,
+      address,
+      father_name,
+      mother_name,
+      guardian_phone
+    } = req.body;
+
+    let payload = { operation };
+
+    if (operation === 'fetch') {
+      payload.email = email || userid;
+    } else {
+      payload.userid = userid || email;
+      payload.phone = phone;
+      payload.date_of_birth = date_of_birth;
+      payload.blood_group = blood_group;
+      payload.address = address;
+      payload.father_name = father_name;
+      payload.mother_name = mother_name;
+      payload.guardian_phone = guardian_phone;
+    }
+
+    console.log(`[STUDENT_PROFILE] Operation: ${operation} | Payload:`, JSON.stringify(payload, null, 2));
+
+    const response = await fetch('https://api.worqhat.com/flows/trigger/142bff82-73c3-4f32-9e03-63071572b8b1', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log(`[STUDENT_PROFILE] API Response for ${operation}:`, JSON.stringify(data, null, 2));
+
+    if (data.status === 'failed' || data.error) {
+      console.error(`[STUDENT_PROFILE] API Error:`, data.message || data.error);
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("[STUDENT_PROFILE] Exception:", error);
+    res.status(500).json({ message: "Student profile operation failed" });
+  }
+});
+
 module.exports = router;
 
 

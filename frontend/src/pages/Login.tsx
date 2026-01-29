@@ -7,14 +7,20 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | 'admin' | 'exam_department'>('student');
   const [error, setError] = useState('');
-  
-  const { login } = useAuth();
+
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Force fresh session on login page mount
+  React.useEffect(() => {
+    console.log('Login Page Mounted: Clearing session for fresh start');
+    logout();
+  }, [logout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     const success = await login(email, password, role);
     if (success) {
       if (role === 'student') {
@@ -51,7 +57,7 @@ const Login: React.FC = () => {
         <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#2c3e50' }}>
           College ERP Login
         </h2>
-        
+
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
@@ -71,7 +77,7 @@ const Login: React.FC = () => {
               }}
             />
           </div>
-          
+
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
               Password
@@ -90,7 +96,7 @@ const Login: React.FC = () => {
               }}
             />
           </div>
-          
+
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
               Role
@@ -112,13 +118,13 @@ const Login: React.FC = () => {
               <option value="exam_department">Exam Department</option>
             </select>
           </div>
-          
+
           {error && (
             <div style={{ color: '#e74c3c', marginBottom: '20px', textAlign: 'center' }}>
               {error}
             </div>
           )}
-          
+
           <button
             type="submit"
             style={{
@@ -136,7 +142,7 @@ const Login: React.FC = () => {
             Login
           </button>
         </form>
-        
+
         <div style={{ textAlign: 'center' }}>
           <Link to="/signup" style={{ color: '#3498db', textDecoration: 'none' }}>
             Don't have an account? Sign up
