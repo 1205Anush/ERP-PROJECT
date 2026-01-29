@@ -378,6 +378,35 @@ router.post("/student-profile", async (req, res) => {
   }
 });
 
+// Course registration management route
+router.post("/course-fetch", async (req, res) => {
+  try {
+    const { operation, semester } = req.body;
+
+    const payload = {
+      operation,
+      semester
+    };
+
+    console.log(`[COURSE_REGISTRATION] Operation: ${operation} | Semester: ${semester}`);
+    const response = await fetch('https://api.worqhat.com/flows/trigger/41b5ced4-8977-467b-9655-be694d97d736', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log(`[COURSE_REGISTRATION] API Response:`, JSON.stringify(data, null, 2));
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("[COURSE_REGISTRATION] Exception:", error);
+    res.status(500).json({ message: "Course registration operation failed" });
+  }
+});
+
 module.exports = router;
 
 
