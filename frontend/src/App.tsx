@@ -27,18 +27,28 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: 'stude
 }) => {
   const { user } = useAuth();
 
-  if (!user) {
+  console.log('ProtectedRoute Check:', {
+    path: window.location.pathname,
+    hasUser: !!user,
+    role: user?.role,
+    allowedRole
+  });
+
+  if (!user || !user.role) {
+    console.log('ProtectedRoute: No valid userSession, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRole && user.role !== allowedRole) {
-    const dashboardRoutes = {
+    const dashboardRoutes: Record<string, string> = {
       student: '/student/dashboard',
       teacher: '/teacher/dashboard',
       admin: '/admin/dashboard',
       exam_department: '/exam/dashboard'
     };
-    return <Navigate to={dashboardRoutes[user.role]} replace />;
+    const target = dashboardRoutes[user.role] || '/login';
+    console.log(`ProtectedRoute: Role mismatch (${user.role} != ${allowedRole}), redirecting to ${target}`);
+    return <Navigate to={target} replace />;
   }
 
   return <>{children}</>;
@@ -53,12 +63,7 @@ const AppRoutes: React.FC = () => {
       {/* Public Routes */}
       <Route
         path="/login"
-        element={user ? <Navigate to={{
-          student: '/student/dashboard',
-          teacher: '/teacher/dashboard',
-          admin: '/admin/dashboard',
-          exam_department: '/exam/dashboard'
-        }[user.role]} replace /> : <Login />}
+        element={<Login />}
       />
       <Route
         path="/signup"
@@ -202,18 +207,7 @@ const AppRoutes: React.FC = () => {
       {/* Default Route */}
       <Route
         path="/"
-        element={
-          user ? (
-            <Navigate to={{
-              student: '/student/dashboard',
-              teacher: '/teacher/dashboard',
-              admin: '/admin/dashboard',
-              exam_department: '/exam/dashboard'
-            }[user.role]} replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={<Login />}
       />
 
       <Route
