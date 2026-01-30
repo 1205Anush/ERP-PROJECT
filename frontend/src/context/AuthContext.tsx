@@ -6,6 +6,7 @@ interface AuthContextType {
   login: (email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => Promise<boolean>;
   logout: () => void;
   signup: (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department') => Promise<boolean>;
+  updateUserDetails: (details: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('WORKFLOW RESULT:', workflowResult);
 
       if (data.success === true && data.data.success === true && data.data.statusCode === "200" && workflowResult.status !== "failed") {
+        const getFirstVal = (val: any) => Array.isArray(val) ? val[0] : val;
+        const uid = getFirstVal(workflowResult.result || workflowResult.uid || workflowResult.roll_no || workflowResult.roll_num || data.data.result || data.uid || '');
+        console.log('LOGIN SUCCESS. DETECTED UID:', uid);
 
         // Login successful, now call user-info API
         const response1 = await fetch('http://localhost:5000/api/flows/user-info', {
@@ -59,26 +63,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const userInfoData = await response1.json();
         console.log('USER INFO RESPONSE:', userInfoData);
 
-        setUser({
+        const newUser: User = {
           id: email,
+          uid: uid,
           name: email.split('@')[0],
           email,
           role,
-          rollNumber: role === 'student' ? 'CS2021001' : undefined,
+          rollNumber: role === 'student' ? uid : undefined,
           department: 'Computer Science',
           semester: role === 'student' ? 4 : undefined
-        });
-        
+        };
+
+        setUser(newUser);
+
         // Save user to localStorage
-        localStorage.setItem('user', JSON.stringify({
-          id: email,
-          name: email.split('@')[0],
-          email,
-          role,
-          rollNumber: role === 'student' ? 'CS2021001' : undefined,
-          department: 'Computer Science',
-          semester: role === 'student' ? 4 : undefined
-        }));
+        localStorage.setItem('user', JSON.stringify(newUser));
         return true;
       } else {
         console.warn('LOGIN FAILED:', workflowResult.message || 'Unknown error');
@@ -94,6 +93,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+  };
+
+  const updateUserDetails = (details: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...details };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department'): Promise<boolean> => {
@@ -131,7 +139,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, signup }}>
+    <AuthContext.Provider value={{ user, login, logout, signup, updateUserDetails }}>
       {children}
     </AuthContext.Provider>
   );

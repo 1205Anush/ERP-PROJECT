@@ -12,7 +12,6 @@ import StudentNotices from './pages/StudentNotices';
 import Attendance from './pages/Attendance';
 import Courses from './pages/Courses';
 import Exams from './pages/Exams';
-import FeesStatus from './pages/FeesStatus';
 import StudentMarks from './pages/StudentMarks';
 import ChangePassword from './pages/ChangePassword';
 import StudentPerformance from './pages/StudentPerformance';
@@ -127,38 +126,6 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/teacher/courses"
-        element={
-          <ProtectedRoute allowedRole="teacher">
-            <Courses />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/teacher/exams"
-        element={
-          <ProtectedRoute allowedRole="teacher">
-            <Exams />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/teacher/fees-status"
-        element={
-          <ProtectedRoute allowedRole="teacher">
-            <FeesStatus />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/teacher/student-performance"
-        element={
-          <ProtectedRoute allowedRole="teacher">
-            <StudentPerformance />
-          </ProtectedRoute>
-        }
-      />
 
       {/* Protected Admin Routes */}
       <Route
@@ -174,6 +141,14 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute allowedRole="admin">
             <AdminNotices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/courses"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <Courses />
           </ProtectedRoute>
         }
       />

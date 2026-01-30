@@ -20,30 +20,29 @@ const Courses: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // Format data exactly as your API expects
       const payload = {
         course_code: formData.code,
         course_name: formData.name,
         credits: formData.credits,
+        available_seat: formData.seats,
         semester: formData.semester,
-        department: formData.department,
-        seats: formData.seats,
-        operation: "add"
+        department: formData.department
       };
-      
-      console.log('Sending payload:', payload);
-      
-      const response = await fetch('http://localhost:5000/api/flows/course-add', {
+
+      console.log('Sending payload for course addition:', payload);
+
+      const response = await fetch('http://localhost:5000/api/flows/add-course', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
+
       const result = await response.json();
       console.log('Course add response:', result);
-      
+
       if (response.ok) {
         // Add course to local state for immediate UI update
         const newCourse = {
@@ -125,7 +124,7 @@ const Courses: React.FC = () => {
                 <input
                   type="text"
                   value={formData.code}
-                  onChange={(e) => setFormData({...formData, code: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   required
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 />
@@ -137,7 +136,7 @@ const Courses: React.FC = () => {
                   min="1"
                   max="6"
                   value={formData.credits}
-                  onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) })}
                   required
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 />
@@ -146,10 +145,10 @@ const Courses: React.FC = () => {
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Semester</label>
                 <select
                   value={formData.semester}
-                  onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value) })}
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 >
-                  {[1,2,3,4,5,6,7,8].map(sem => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
                     <option key={sem} value={sem}>Semester {sem}</option>
                   ))}
                 </select>
@@ -161,7 +160,7 @@ const Courses: React.FC = () => {
                   min="10"
                   max="100"
                   value={formData.seats}
-                  onChange={(e) => setFormData({...formData, seats: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, seats: parseInt(e.target.value) })}
                   required
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 />
@@ -173,7 +172,7 @@ const Courses: React.FC = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 />
@@ -183,14 +182,14 @@ const Courses: React.FC = () => {
                 <input
                   type="text"
                   value={formData.department}
-                  onChange={(e) => setFormData({...formData, department: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                   required
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
                 />
               </div>
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
             >
               Add Course

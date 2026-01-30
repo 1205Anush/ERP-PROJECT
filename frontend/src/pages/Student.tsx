@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Layout from '../layouts/Layout';
 import StudentDashboard from './StudentDashboard';
 import CourseRegistration from './CourseRegistration';
-import FeesPayment from './FeesPayment';
 import StudentInformation from './StudentInformation';
 import Examination from './Examination';
 
@@ -15,8 +14,6 @@ const Student: React.FC = () => {
         return <StudentDashboard />;
       case 'course-registration':
         return <CourseRegistration />;
-      case 'fees':
-        return <FeesPayment />;
       case 'student-info':
         return <StudentInformation />;
       case 'examination':

@@ -54,7 +54,7 @@ const InfoField: React.FC<InfoFieldProps> = ({
 );
 
 const StudentInformation: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserDetails } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -99,9 +99,11 @@ const StudentInformation: React.FC = () => {
             return Array.isArray(val) ? val[0] : val;
           };
 
+          const fetchedRollNumber = getVal('roll_no') || getVal('roll num') || getVal('rollNumber') || '';
+
           setFormData({
             name: getVal('full name') || getVal('name') || user.name || '',
-            rollNumber: getVal('roll num') || getVal('rollNumber') || '',
+            rollNumber: fetchedRollNumber,
             email: getVal('email') || user.email,
             department: getVal('department') || '',
             semester: parseInt(getVal('semester')) || user?.semester || 1,
@@ -113,6 +115,12 @@ const StudentInformation: React.FC = () => {
             motherName: getVal('mother_name') || getVal('mother name') || '',
             guardianPhone: getVal('guardian_phone') || getVal('guardian num') || ''
           });
+
+          // Sync UID/rollNumber to global context if it's missing or different
+          if (fetchedRollNumber && user?.rollNumber !== fetchedRollNumber) {
+            console.log('Syncing fetched Roll Number to global context:', fetchedRollNumber);
+            updateUserDetails({ rollNumber: fetchedRollNumber, uid: fetchedRollNumber });
+          }
         }
       } catch (error) {
         console.error('Error fetching student info:', error);
@@ -120,7 +128,7 @@ const StudentInformation: React.FC = () => {
         setLoading(false);
       }
     }
-  }, [user]);
+  }, [user, updateUserDetails]);
 
   useEffect(() => {
     fetchStudentInfo();
@@ -274,7 +282,7 @@ const StudentInformation: React.FC = () => {
                 Academic Record
               </h3>
 
-              <InfoField label="Roll Number" name="rollNumber" value={formData.rollNumber} required isEditing={false} onChange={handleInputChange} />
+              <InfoField label="Roll Number" name="rollNumber" value={user?.rollNumber || formData.rollNumber} required isEditing={false} onChange={handleInputChange} />
               <InfoField label="Department" name="department" value={formData.department} required isEditing={false} onChange={handleInputChange} />
 
               <div style={{ marginBottom: '0px' }}>

@@ -11,21 +11,103 @@ interface SubjectMark {
   grade: string;
 }
 
+interface ApiCourse {
+  id: string;
+  name: string;
+  credits?: string | number;
+}
+
 const Examination: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'registration' | 'results' | 'marks'>('registration');
-  const [selectedExamCourses, setSelectedExamCourses] = useState<string[]>([]);
-  const [registeredExamCourses, setRegisteredExamCourses] = useState<string[]>(['1', '2', '3']);
+  const [enrolledCourses, setEnrolledCourses] = useState<ApiCourse[]>([]);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registeredExamCourses, setRegisteredExamCourses] = useState<string[]>([]);
   const [subjectMarks, setSubjectMarks] = useState<SubjectMark[]>([]);
+  const [loading, setLoading] = useState(false);
   const [loadingMarks, setLoadingMarks] = useState(false);
 
-  useEffect(() => {
-    if (activeTab === 'marks' && user?.rollNumber) {
-      fetchStudentMarks();
-    }
-  }, [activeTab, user?.rollNumber]);
+  const fetchEnrolledCourses = React.useCallback(async () => {
+    const studentId = user?.rollNumber || user?.uid || user?.email;
+    if (!studentId) return;
 
-  const fetchStudentMarks = async () => {
+    try {
+      setLoading(true);
+      console.log('Examination: Fetching enrolled courses for:', studentId);
+      const response = await fetch('http://localhost:5000/api/flows/enrolled-courses-fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId })
+      });
+
+      const result = await response.json();
+      console.log('Examination: Enrolled courses response:', result);
+
+      if (response.ok && result.data) {
+        let apiData = result.data;
+        if (apiData.data) apiData = apiData.data;
+
+        const ids = apiData.course_ids || apiData.courseid || apiData.course_id || apiData.id || [];
+        const names = apiData.course_name || apiData.name || [];
+        const credits = apiData.credits || [];
+
+        const courses: ApiCourse[] = [];
+        const maxLength = Math.max(ids.length, names.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          courses.push({
+            id: ids[i] || `course-${i}`,
+            name: names[i] || 'Unnamed Course',
+            credits: credits[i] || '3'
+          });
+        }
+        setEnrolledCourses(courses);
+      }
+    } catch (error) {
+      console.error('Error fetching enrolled courses for exam:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const handleExamRegistration = async (course: ApiCourse) => {
+    const studentId = user?.rollNumber || user?.uid || user?.email;
+    if (!studentId) {
+      alert("Roll number not found. Please sync your profile first.");
+      return;
+    }
+
+    try {
+      setRegisteringId(course.id);
+      console.log('Registering for exam. Student:', studentId, 'Course:', course.id);
+
+      const response = await fetch('http://localhost:5000/api/flows/exam-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stud_id: studentId,
+          course_id: course.id
+        })
+      });
+
+      const result = await response.json();
+      console.log('Exam registration response:', result);
+
+      if (response.ok) {
+        setRegisteredExamCourses(prev => [...prev, course.id]);
+        alert(`Successfully registered for the ${course.name} exam!`);
+      } else {
+        alert(`Registration failed: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during exam registration:', error);
+      alert('An error occurred during exam registration.');
+    } finally {
+      setRegisteringId(null);
+    }
+  };
+
+  const fetchStudentMarks = React.useCallback(async () => {
     setLoadingMarks(true);
     try {
       const response = await fetch('http://localhost:5000/api/flows/marks-management', {
@@ -45,7 +127,6 @@ const Examination: React.FC = () => {
         if (data.data) data = data.data; // Handle nesting
         if (data.data) data = data.data;
 
-        // Assuming data contains: course_id[], midsem[], endsem[], internal[]
         const courseIds = data.course_id || [];
         const midsemMarks = data.midsem || [];
         const endsemMarks = data.endsem || [];
@@ -76,7 +157,15 @@ const Examination: React.FC = () => {
     } finally {
       setLoadingMarks(false);
     }
-  };
+  }, [user?.rollNumber]);
+
+  useEffect(() => {
+    if (activeTab === 'registration') {
+      fetchEnrolledCourses();
+    } else if (activeTab === 'marks' && user?.rollNumber) {
+      fetchStudentMarks();
+    }
+  }, [activeTab, user?.rollNumber, fetchEnrolledCourses, fetchStudentMarks]);
 
   const calculateGrade = (total: number) => {
     if (total >= 90) return 'A+';
@@ -85,20 +174,6 @@ const Examination: React.FC = () => {
     if (total >= 60) return 'B';
     if (total >= 50) return 'C';
     return 'F';
-  };
-
-  const handleExamCourseSelection = (courseId: string) => {
-    setSelectedExamCourses(prev =>
-      prev.includes(courseId)
-        ? prev.filter(id => id !== courseId)
-        : [...prev, courseId]
-    );
-  };
-
-  const handleExamRegistration = () => {
-    setRegisteredExamCourses(prev => [...prev, ...selectedExamCourses]);
-    setSelectedExamCourses([]);
-    alert('Exam registration successful!');
   };
 
   const TabButton: React.FC<{ id: string; label: string }> = ({ id, label }) => (
@@ -157,69 +232,60 @@ const Examination: React.FC = () => {
             <div>
               <h3 style={{ marginBottom: '24px', color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>Exam Registration</h3>
 
-              <div style={{ marginBottom: '32px' }}>
-                {mockCourses.map(course => (
-                  <div key={course.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '20px',
-                    border: '1px solid #f1f5f9',
-                    borderRadius: '8px',
-                    marginBottom: '12px',
-                    transition: 'all 0.2s ease',
-                    backgroundColor: registeredExamCourses.includes(course.id) ? '#f8fafc' : 'white'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedExamCourses.includes(course.id) || registeredExamCourses.includes(course.id)}
-                      onChange={() => handleExamCourseSelection(course.id)}
-                      disabled={registeredExamCourses.includes(course.id)}
-                      style={{ marginRight: '16px', cursor: 'pointer', width: '18px', height: '18px' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '600', fontSize: '16px', color: '#334155' }}>{course.name}</div>
-                      <div style={{ color: '#94a3b8', fontSize: '14px', marginTop: '2px' }}>
-                        {course.code} | Credits: {course.credits}
-                      </div>
-                    </div>
-                    {registeredExamCourses.includes(course.id) && (
-                      <div style={{
-                        padding: '4px 12px',
-                        backgroundColor: '#f1f5f9',
-                        color: '#64748b',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        Registered
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <div style={{ marginBottom: '16px' }}>
+                {loading ? (
+                  <div style={{ padding: '64px', textAlign: 'center', color: '#94a3b8' }}>Loading enrolled courses...</div>
+                ) : enrolledCourses.length > 0 ? (
+                  enrolledCourses.map(course => {
+                    const isRegistered = registeredExamCourses.includes(course.id);
+                    const isRegistering = registeringId === course.id;
 
-              {selectedExamCourses.length > 0 && (
-                <div style={{ textAlign: 'center' }}>
-                  <button
-                    onClick={handleExamRegistration}
-                    style={{
-                      padding: '12px 32px',
-                      backgroundColor: '#334155',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '15px',
-                      cursor: 'pointer',
-                      fontWeight: '600',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#334155'}
-                  >
-                    Complete Registration ({selectedExamCourses.length})
-                  </button>
-                </div>
-              )}
+                    return (
+                      <div key={course.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '20px',
+                        border: '1px solid #f1f5f9',
+                        borderRadius: '10px',
+                        marginBottom: '16px',
+                        backgroundColor: isRegistered ? '#f0fdf4' : 'white',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '600', fontSize: '16px', color: '#1e293b' }}>{course.name}</div>
+                          <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+                            {course.id} • {course.credits} Credits
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleExamRegistration(course)}
+                          disabled={isRegistered || isRegistering}
+                          style={{
+                            padding: '10px 24px',
+                            backgroundColor: isRegistered ? '#16a34a' : (isRegistering ? '#94a3b8' : '#334155'),
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            cursor: isRegistered || isRegistering ? 'default' : 'pointer',
+                            fontWeight: '600',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            minWidth: '160px'
+                          }}
+                        >
+                          {isRegistered ? 'Registered for Exam' : (isRegistering ? 'Registering...' : 'Register for Exam')}
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                    No enrolled courses found. Please register for courses first.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

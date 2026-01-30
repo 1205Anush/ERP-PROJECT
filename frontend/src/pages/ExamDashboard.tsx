@@ -1,23 +1,46 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ExamDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const examFeatures = [
     { title: 'Exam Scheduling', description: 'Schedule and manage exams', path: '/exam/exams', color: '#1e293b' },
-    { title: 'Student Marks', description: 'Add and manage student marks', path: '/exam/student-marks', color: '#334155' },
-    { title: 'Result Management', description: 'Process and publish results', path: '/exam/results', color: '#475569' },
-    { title: 'Grade Processing', description: 'Calculate grades and CGPA', path: '/exam/grades', color: '#64748b' }
+    { title: 'Student Marks', description: 'Add and manage student marks', path: '/exam/student-marks', color: '#334155' }
   ];
 
   return (
     <div style={{ padding: '40px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '48px' }}>
-          <h1 style={{ color: '#0f172a', marginBottom: '8px', fontSize: '32px', fontWeight: '700', letterSpacing: '-0.025em' }}>Welcome, {user?.name}</h1>
-          <p style={{ color: '#64748b', fontSize: '16px', fontWeight: '400' }}>Exam Department Dashboard</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px' }}>
+          <div>
+            <h1 style={{ color: '#0f172a', marginBottom: '8px', fontSize: '32px', fontWeight: '700', letterSpacing: '-0.025em', margin: 0 }}>Welcome, {user?.name}</h1>
+            <p style={{ color: '#64748b', fontSize: '16px', fontWeight: '400', margin: '8px 0 0 0' }}>Exam Department Dashboard</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c0392b'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e74c3c'}
+          >
+            Logout
+          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>

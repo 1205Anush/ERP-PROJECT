@@ -12,7 +12,8 @@ const AdminDashboard: React.FC = () => {
   };
 
   const adminFeatures = [
-    { title: 'Notice Management', description: 'Approve/reject teacher notice requests', path: '/admin/notices', color: '#3498db' }
+    { title: 'Notice Management', description: 'Approve/reject teacher notice requests', path: '/admin/notices', color: '#3498db' },
+    { title: 'Course Management', description: 'Add or remove courses from the curriculum', path: '/admin/courses', color: '#f39c12' }
   ];
 
   return (
@@ -60,10 +61,10 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '40px', 
-        borderRadius: '10px', 
+      <div style={{
+        backgroundColor: 'white',
+        padding: '40px',
+        borderRadius: '10px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         textAlign: 'center'
       }}>

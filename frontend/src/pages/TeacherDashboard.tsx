@@ -1,24 +1,42 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const TeacherDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const teacherFeatures = [
     { title: 'Notices', description: 'Manage announcements and notices', icon: '📢', path: '/teacher/notices', color: '#3498db' },
-    { title: 'Attendance', description: 'Track student attendance', icon: '📋', path: '/teacher/attendance', color: '#27ae60' },
-    { title: 'Courses', description: 'Manage course information', icon: '📚', path: '/teacher/courses', color: '#f39c12' },
-    { title: 'View Exams', description: 'View upcoming exams and schedules', icon: '📝', path: '/teacher/exams', color: '#e74c3c' },
-    { title: 'Fees Status', description: 'Monitor student fee payments', icon: '💰', path: '/teacher/fees-status', color: '#9b59b6' },
-    { title: 'Performance', description: 'View student performance analytics', icon: '📈', path: '/teacher/student-performance', color: '#34495e' }
+    { title: 'Attendance', description: 'Track student attendance', icon: '📋', path: '/teacher/attendance', color: '#27ae60' }
   ];
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ color: '#2c3e50', marginBottom: '10px' }}>Welcome, {user?.name}! 👨🏫</h1>
-        <p style={{ color: '#7f8c8d', fontSize: '16px' }}>Manage your classes and students efficiently</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div>
+          <h1 style={{ color: '#2c3e50', marginBottom: '10px', margin: 0 }}>Welcome, {user?.name}! 👨‍🏫</h1>
+          <p style={{ color: '#7f8c8d', fontSize: '16px', margin: '5px 0 0 0' }}>Manage your classes and students efficiently</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>

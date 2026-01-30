@@ -310,7 +310,7 @@ router.post("/course-registration", async (req, res) => {
     };
 
     console.log("Course registration payload:", JSON.stringify(payload, null, 2));
-    
+
     const response = await fetch('https://api.worqhat.com/flows/trigger/cec28aa2-e35f-4d72-8e30-9b075c68d1df', {
       method: "POST",
       headers: {
@@ -322,7 +322,7 @@ router.post("/course-registration", async (req, res) => {
 
     const data = await response.json();
     console.log("Course registration response:", JSON.stringify(data, null, 2));
-    
+
     res.status(200).json(data);
   } catch (error) {
     console.error("Course registration error:", error);
@@ -443,6 +443,114 @@ router.post("/course-fetch", async (req, res) => {
   } catch (error) {
     console.error("[COURSE_REGISTRATION] Exception:", error);
     res.status(500).json({ message: "Course registration operation failed" });
+  }
+});
+
+// Enrolled courses fetch route (Student side)
+router.post("/enrolled-courses-fetch", async (req, res) => {
+  try {
+    const { student_id } = req.body;
+
+    if (!student_id) {
+      return res.status(400).json({ message: "Missing required field: student_id" });
+    }
+
+    const payload = {
+      student_id: student_id.toString()
+    };
+
+    console.log("[ENROLLED_COURSES_FETCH] Payload:", JSON.stringify(payload, null, 2));
+
+    const response = await fetch('https://api.worqhat.com/flows/trigger/275fddb5-7e41-4c29-b20d-122e23bb6304', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("[ENROLLED_COURSES_FETCH] Response:", JSON.stringify(data, null, 2));
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("[ENROLLED_COURSES_FETCH] Error:", error);
+    res.status(500).json({ message: "Enrolled courses fetch failed", error: error.message });
+  }
+});
+
+// Exam registration route (Student side)
+router.post("/exam-registration", async (req, res) => {
+  try {
+    const { stud_id, course_id } = req.body;
+
+    if (!stud_id || !course_id) {
+      return res.status(400).json({ message: "Missing required fields: stud_id, course_id" });
+    }
+
+    const payload = {
+      stud_id: stud_id.toString(),
+      course_id: course_id.toString()
+    };
+
+    console.log("[EXAM_REGISTRATION] Payload:", JSON.stringify(payload, null, 2));
+
+    const response = await fetch('https://api.worqhat.com/flows/trigger/ad281a5d-7da9-4838-b3c0-e66c12ec0e66', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("[EXAM_REGISTRATION] Response:", JSON.stringify(data, null, 2));
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("[EXAM_REGISTRATION] Error:", error);
+    res.status(500).json({ message: "Exam registration failed", error: error.message });
+  }
+});
+
+// Add course route (Admin side)
+router.post("/add-course", async (req, res) => {
+  try {
+    const { course_code, course_name, credits, available_seat, semester, department } = req.body;
+
+    if (!course_code || !course_name || !credits || !available_seat || !semester || !department) {
+      return res.status(400).json({ message: "Missing required fields for adding course" });
+    }
+
+    const payload = {
+      course_code: course_code.toString(),
+      course_name: course_name.toString(),
+      credits: credits.toString(),
+      available_seat: available_seat.toString(),
+      semester: semester.toString(),
+      department: department.toString()
+    };
+
+    console.log("[ADD_COURSE] Payload:", JSON.stringify(payload, null, 2));
+
+    const response = await fetch('https://api.worqhat.com/flows/trigger/84030cd1-8396-476c-b4d6-9ebea9599cd6', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.WORQHAT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("[ADD_COURSE] Response:", JSON.stringify(data, null, 2));
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("[ADD_COURSE] Error:", error);
+    res.status(500).json({ message: "Course addition failed", error: error.message });
   }
 });
 

@@ -8,14 +8,59 @@ interface ApiNotice {
   priority: number;
 }
 
+interface ApiCourse {
+  id: string;
+  name: string;
+  credits?: string | number;
+}
+
 const StudentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserDetails } = useAuth();
   const [apiNotices, setApiNotices] = useState<ApiNotice[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<ApiCourse[]>([]);
   const [studentInfo, setStudentInfo] = useState({
     rollNumber: '',
     department: '',
     semester: 1
   });
+
+  const fetchEnrolledCourses = React.useCallback(async (studentId: string) => {
+    try {
+      console.log('Fetching enrolled courses for:', studentId);
+      const response = await fetch('http://localhost:5000/api/flows/enrolled-courses-fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId })
+      });
+
+      const result = await response.json();
+      console.log('Enrolled courses response:', result);
+
+      if (response.ok && result.data) {
+        let apiData = result.data;
+        if (apiData.data) apiData = apiData.data;
+
+        // Extract arrays (e.g., course_ids, courseid, course_id, course_name)
+        const ids = apiData.course_ids || apiData.courseid || apiData.course_id || apiData.id || [];
+        const names = apiData.course_name || apiData.name || [];
+        const credits = apiData.credits || [];
+
+        const courses: ApiCourse[] = [];
+        const maxLength = Math.max(ids.length, names.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          courses.push({
+            id: ids[i] || `course-${i}`,
+            name: names[i] || 'Unnamed Course',
+            credits: credits[i] || '3'
+          });
+        }
+        setEnrolledCourses(courses);
+      }
+    } catch (error) {
+      console.error('Error fetching enrolled courses:', error);
+    }
+  }, []);
 
   const fetchStudentProfile = React.useCallback(async () => {
     if (user?.email) {
@@ -39,17 +84,29 @@ const StudentDashboard: React.FC = () => {
             return Array.isArray(val) ? val[0] : val;
           };
 
+          const fetchedRollNum = getVal('roll_no') || getVal('roll num') || getVal('rollNumber') || '';
+
           setStudentInfo({
-            rollNumber: getVal('roll num') || getVal('rollNumber') || '',
+            rollNumber: fetchedRollNum,
             department: getVal('department') || '',
-            semester: parseInt(getVal('semester')) || user.semester || 1
+            semester: parseInt(getVal('semester')) || user?.semester || 1
           });
+
+          // Sync UID/rollNumber to global context if it's missing or different
+          if (fetchedRollNum && user?.rollNumber !== fetchedRollNum) {
+            console.log('Dashboard: Syncing fetched Roll Number to global context:', fetchedRollNum);
+            updateUserDetails({ rollNumber: fetchedRollNum, uid: fetchedRollNum });
+          }
+
+          // Fetch enrolled courses once we have the ID
+          const finalId = fetchedRollNum || user.uid || user.rollNumber || user.email;
+          fetchEnrolledCourses(finalId);
         }
       } catch (error) {
         console.error('Error fetching dashboard profile:', error);
       }
     }
-  }, [user]);
+  }, [user, updateUserDetails, fetchEnrolledCourses]);
 
   const fetchNotices = React.useCallback(async () => {
     try {
@@ -96,21 +153,25 @@ const StudentDashboard: React.FC = () => {
       <div style={{ marginBottom: '40px' }}>
         <h2 style={{ color: '#1e293b', margin: 0, fontWeight: '600', fontSize: '28px', letterSpacing: '-0.025em' }}>Welcome back, {user?.name}</h2>
         <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '15px' }}>
-          Roll No: {studentInfo.rollNumber || '---'} | Department: {studentInfo.department || '---'} | Semester: {studentInfo.semester}
+          Roll No: {user?.rollNumber || studentInfo.rollNumber || '---'} | Department: {studentInfo.department || '---'} | Semester: {studentInfo.semester}
         </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
         <Card title="📚 Enrolled Courses">
-          {mockCourses.slice(0, 4).map(course => (
-            <div key={course.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #ecf0f1' }}>
-              <div>
-                <div style={{ fontWeight: 'bold' }}>{course.name}</div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>{course.code}</div>
+          {enrolledCourses.length > 0 ? (
+            enrolledCourses.map(course => (
+              <div key={course.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <div>
+                  <div style={{ fontWeight: '600', color: '#1e293b' }}>{course.name}</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{course.id}</div>
+                </div>
+                <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '13px' }}>{course.credits} Credits</div>
               </div>
-              <div style={{ color: '#27ae60', fontWeight: 'bold' }}>{course.credits} Credits</div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>No courses enrolled yet</div>
+          )}
         </Card>
 
         <Card title="📊 Attendance Summary">

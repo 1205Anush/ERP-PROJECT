@@ -11,8 +11,9 @@ interface Course {
 const CourseRegistration: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registeredCourses, setRegisteredCourses] = useState<string[]>([]);
   const [semester, setSemester] = useState<number | null>(null);
 
   const fetchStudentSemester = useCallback(async () => {
@@ -68,11 +69,9 @@ const CourseRegistration: React.FC = () => {
         let data = result.data;
         if (data.data) data = data.data;
 
-        // Map the API response to Course interface
-        // Handling potential different keys based on WorqHat patterns
         const names = data.course_name || data.name || [];
         const codes = data.course_code || data.code || [];
-        const ids = data.course_id || data.id || [];
+        const ids = data.courseid || data.course_id || data.id || [];
         const credits = data.credits || [];
 
         const maxLength = Math.max(names.length, codes.length, ids.length);
@@ -107,17 +106,45 @@ const CourseRegistration: React.FC = () => {
     init();
   }, [fetchStudentSemester, fetchAvailableCourses]);
 
-  const handleCourseSelection = (courseId: string) => {
-    setSelectedCourses(prev =>
-      prev.includes(courseId)
-        ? prev.filter(id => id !== courseId)
-        : [...prev, courseId]
-    );
-  };
+  const handleRegisterCourse = async (course: Course) => {
+    if (!user) return;
 
-  const handleSubmit = () => {
-    alert(`Successfully requested registration for ${selectedCourses.length} courses!`);
-    setSelectedCourses([]);
+    console.log('CourseRegistration: Current User State:', user);
+
+    const getFirst = (val: any) => Array.isArray(val) ? val[0] : val;
+    const studentId = getFirst(user.uid) || getFirst(user.rollNumber) || user.email;
+
+    console.log('Registering course for Student ID:', studentId);
+
+    try {
+      setRegisteringId(course.id);
+      const response = await fetch('http://localhost:5000/api/flows/course-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: studentId,
+          course_id: course.id,
+          course_name: course.name,
+          credits: course.credits,
+          operation: 'register'
+        })
+      });
+
+      const result = await response.json();
+      console.log('Registration response:', result);
+
+      if (response.ok) {
+        setRegisteredCourses(prev => [...prev, course.id]);
+        alert(`Successfully registered for ${course.name}!`);
+      } else {
+        alert(`Registration failed: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during registration:', error);
+      alert('An error occurred during registration. Please try again.');
+    } finally {
+      setRegisteringId(null);
+    }
   };
 
   if (loading) {
@@ -134,7 +161,7 @@ const CourseRegistration: React.FC = () => {
         <div style={{ marginBottom: '40px' }}>
           <h2 style={{ color: '#1e293b', margin: 0, fontWeight: '600', fontSize: '28px' }}>Course Registration</h2>
           <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '15px' }}>
-            Semester {semester} | Select courses to enroll for this session
+            Semester {semester} | Enroll in available courses for this session
           </p>
         </div>
 
@@ -147,72 +174,58 @@ const CourseRegistration: React.FC = () => {
         }}>
           <h3 style={{ marginBottom: '24px', color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>Available Courses</h3>
 
-          <div style={{ marginBottom: '32px' }}>
+          <div style={{ marginBottom: '16px' }}>
             {courses.length > 0 ? (
-              courses.map(course => (
-                <div key={course.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '16px 20px',
-                  border: '1px solid #f1f5f9',
-                  borderRadius: '10px',
-                  marginBottom: '12px',
-                  backgroundColor: selectedCourses.includes(course.id) ? '#f0f9ff' : 'white',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer'
-                }}
-                  onClick={() => handleCourseSelection(course.id)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedCourses.includes(course.id)}
-                    onChange={() => { }} // Controlled by parent div click
-                    style={{ marginRight: '20px', width: '18px', height: '18px', accentColor: '#334155' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '600', fontSize: '16px', color: '#1e293b' }}>{course.name}</div>
-                    <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
-                      {course.code} • {course.credits} Credits
+              courses.map(course => {
+                const isRegistered = registeredCourses.includes(course.id);
+                const isRegistering = registeringId === course.id;
+
+                return (
+                  <div key={course.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '20px',
+                    border: '1px solid #f1f5f9',
+                    borderRadius: '10px',
+                    marginBottom: '16px',
+                    backgroundColor: isRegistered ? '#f0fdf4' : 'white',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', fontSize: '16px', color: '#1e293b' }}>{course.name}</div>
+                      <div style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+                        {course.code} • {course.credits} Credits
+                      </div>
                     </div>
+
+                    <button
+                      onClick={() => handleRegisterCourse(course)}
+                      disabled={isRegistered || isRegistering}
+                      style={{
+                        padding: '10px 24px',
+                        backgroundColor: isRegistered ? '#16a34a' : (isRegistering ? '#94a3b8' : '#334155'),
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        cursor: isRegistered || isRegistering ? 'default' : 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        minWidth: '120px'
+                      }}
+                    >
+                      {isRegistered ? 'Registered' : (isRegistering ? 'Registering...' : 'Register')}
+                    </button>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                 No courses available for Semester {semester} at this time.
               </div>
             )}
           </div>
-
-          {selectedCourses.length > 0 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderTop: '1px solid #f1f5f9',
-              paddingTop: '24px'
-            }}>
-              <div style={{ color: '#64748b', fontSize: '14px' }}>
-                Selected: <span style={{ fontWeight: '600', color: '#1e293b' }}>{selectedCourses.length} courses</span>
-              </div>
-              <button
-                onClick={handleSubmit}
-                style={{
-                  padding: '12px 32px',
-                  backgroundColor: '#334155',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                }}
-              >
-                Complete Registration
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -21,7 +21,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
     { id: 'course-registration', label: 'Course Registration', icon: '📚' },
-    { id: 'fees', label: 'Fees Payment', icon: '💳' },
     { id: 'student-info', label: 'Student Information', icon: '👤' },
     { id: 'examination', label: 'Examination', icon: '📝' }
   ];
@@ -29,9 +28,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
       {/* Sidebar */}
-      <div style={{ 
-        width: '250px', 
-        backgroundColor: '#2c3e50', 
+      <div style={{
+        width: '250px',
+        backgroundColor: '#2c3e50',
         color: 'white',
         padding: '20px 0'
       }}>
@@ -75,7 +74,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
           <h1 style={{ margin: 0, fontSize: '24px', color: '#2c3e50' }}>
             {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
           </h1>
-          
+
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
@@ -94,7 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
             >
               {user?.name.charAt(0)}
             </div>
-            
+
             {showProfileDropdown && (
               <div style={{
                 position: 'absolute',
