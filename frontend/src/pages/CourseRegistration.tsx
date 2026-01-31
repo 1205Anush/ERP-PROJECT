@@ -19,7 +19,7 @@ const CourseRegistration: React.FC = () => {
   const fetchStudentSemester = useCallback(async () => {
     if (user?.email) {
       try {
-        const response = await fetch('http://localhost:5000/api/flows/student-profile', {
+        const response = await fetch('http://localhost:8080/api/flows/student-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -53,7 +53,7 @@ const CourseRegistration: React.FC = () => {
   const fetchAvailableCourses = useCallback(async (sem: number) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/flows/course-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/course-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -118,7 +118,7 @@ const CourseRegistration: React.FC = () => {
 
     try {
       setRegisteringId(course.id);
-      const response = await fetch('http://localhost:5000/api/flows/course-registration', {
+      const response = await fetch('http://localhost:8080/api/flows/course-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

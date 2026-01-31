@@ -76,7 +76,7 @@ const StudentInformation: React.FC = () => {
     if (user?.email) {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/flows/student-profile', {
+        const response = await fetch('http://localhost:8080/api/flows/student-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -157,7 +157,7 @@ const StudentInformation: React.FC = () => {
       };
 
       console.log('Saving profile payload:', payload);
-      const response = await fetch('http://localhost:5000/api/flows/student-profile', {
+      const response = await fetch('http://localhost:8080/api/flows/student-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -22,7 +22,7 @@ const Notices: React.FC = () => {
       
       console.log('Sending notice payload:', payload);
       
-      const response = await fetch('http://localhost:5000/api/flows/notice-add', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

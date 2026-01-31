@@ -34,7 +34,7 @@ const Examination: React.FC = () => {
     try {
       setLoading(true);
       console.log('Examination: Fetching enrolled courses for:', studentId);
-      const response = await fetch('http://localhost:5000/api/flows/enrolled-courses-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/enrolled-courses-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: studentId })
@@ -81,7 +81,7 @@ const Examination: React.FC = () => {
       setRegisteringId(course.id);
       console.log('Registering for exam. Student:', studentId, 'Course:', course.id);
 
-      const response = await fetch('http://localhost:5000/api/flows/exam-registration', {
+      const response = await fetch('http://localhost:8080/api/flows/exam-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,7 +110,7 @@ const Examination: React.FC = () => {
   const fetchStudentMarks = React.useCallback(async () => {
     setLoadingMarks(true);
     try {
-      const response = await fetch('http://localhost:5000/api/flows/marks-management', {
+      const response = await fetch('http://localhost:8080/api/flows/marks-management', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

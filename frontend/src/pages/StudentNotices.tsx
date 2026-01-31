@@ -18,7 +18,7 @@ const StudentNotices: React.FC = () => {
   const fetchNotices = async () => {
     try {
       console.log('Fetching approved notices...');
-      const response = await fetch('http://localhost:5000/api/flows/notice-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     role: 'student' | 'teacher' | 'admin' | 'exam_department'
   ): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:5000/api/flows/trigger', {
+      const response = await fetch('http://localhost:8080/api/flows/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role })
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('LOGIN SUCCESS. DETECTED UID:', uid);
 
         // Login successful, now call user-info API
-        const response1 = await fetch('http://localhost:5000/api/flows/user-info', {
+        const response1 = await fetch('http://localhost:8080/api/flows/user-info', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher' | 'admin' | 'exam_department'): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:5000/api/flows/register', {
+      const response = await fetch('http://localhost:8080/api/flows/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ Name: name, Email: email, Password: password, Role: role })

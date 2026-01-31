@@ -28,7 +28,7 @@ const AdminNotices: React.FC = () => {
   const fetchPendingRequests = async () => {
     try {
       console.log('Fetching pending notice requests...');
-      const response = await fetch('http://localhost:5000/api/flows/notice-fetch-admin', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-fetch-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -74,7 +74,7 @@ const AdminNotices: React.FC = () => {
   const fetchApprovedNotices = async () => {
     try {
       console.log('Fetching approved notices...');
-      const response = await fetch('http://localhost:5000/api/flows/notice-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -113,7 +113,7 @@ const AdminNotices: React.FC = () => {
       const notice = pendingRequests[noticeIndex];
       console.log('Approving notice:', notice);
 
-      const response = await fetch('http://localhost:5000/api/flows/notice-approve', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ const AdminNotices: React.FC = () => {
       const notice = approvedNotices[noticeIndex];
       console.log('Deleting notice:', notice.title);
 
-      const response = await fetch('http://localhost:5000/api/flows/notice-delete', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: notice.title })

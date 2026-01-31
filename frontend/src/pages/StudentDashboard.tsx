@@ -27,7 +27,7 @@ const StudentDashboard: React.FC = () => {
   const fetchEnrolledCourses = React.useCallback(async (studentId: string) => {
     try {
       console.log('Fetching enrolled courses for:', studentId);
-      const response = await fetch('http://localhost:5000/api/flows/enrolled-courses-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/enrolled-courses-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id: studentId })
@@ -65,7 +65,7 @@ const StudentDashboard: React.FC = () => {
   const fetchStudentProfile = React.useCallback(async () => {
     if (user?.email) {
       try {
-        const response = await fetch('http://localhost:5000/api/flows/student-profile', {
+        const response = await fetch('http://localhost:8080/api/flows/student-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -111,7 +111,7 @@ const StudentDashboard: React.FC = () => {
   const fetchNotices = React.useCallback(async () => {
     try {
       console.log('Fetching approved notices for dashboard...');
-      const response = await fetch('http://localhost:5000/api/flows/notice-fetch', {
+      const response = await fetch('http://localhost:8080/api/flows/notice-fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
