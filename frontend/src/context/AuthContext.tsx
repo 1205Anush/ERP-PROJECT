@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const workflowResult = data?.data?.data || {};
       console.log('WORKFLOW RESULT:', workflowResult);
 
-      if (data.success === true && data.data.success === true && data.data.statusCode === "200" && workflowResult.status !== "failed") {
+      if (data.success === true && data.statusCode === "200" && workflowResult.status !== "failed") {
         const getFirstVal = (val: any) => Array.isArray(val) ? val[0] : val;
         const uid = getFirstVal(workflowResult.result || workflowResult.uid || workflowResult.roll_no || workflowResult.roll_num || data.data.result || data.uid || '');
         console.log('LOGIN SUCCESS. DETECTED UID:', uid);

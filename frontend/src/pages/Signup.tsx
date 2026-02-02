@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Signup: React.FC = () => {
   const [name, setName] = useState('');
@@ -66,12 +67,14 @@ const Signup: React.FC = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -85,12 +88,14 @@ const Signup: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -104,12 +109,14 @@ const Signup: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -121,12 +128,14 @@ const Signup: React.FC = () => {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'student' | 'teacher' | 'admin' | 'exam_department')}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             >
               <option value="student">Student</option>
@@ -148,16 +157,20 @@ const Signup: React.FC = () => {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: loading ? '#95a5a6' : '#27ae60',
+              backgroundColor: loading ? '#7f8c8d' : '#27ae60',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               fontSize: '16px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            {loading ? 'Signing Up...' : 'Sign Up'}
+            {loading ? <LoadingSpinner size={16} /> : 'Sign Up'}
           </button>
         </form>
         

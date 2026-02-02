@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockCourses, mockAttendance, mockTimetable } from '../data/mockData';
+import DashboardLoader from '../components/DashboardLoader';
 
 interface ApiNotice {
   title: string;
@@ -23,6 +24,7 @@ const StudentDashboard: React.FC = () => {
     department: '',
     semester: 1
   });
+  const [loading, setLoading] = useState(true);
 
   const fetchEnrolledCourses = React.useCallback(async (studentId: string) => {
     try {
@@ -144,9 +146,16 @@ const StudentDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchNotices();
-    fetchStudentProfile();
+    const loadDashboard = async () => {
+      await Promise.all([fetchNotices(), fetchStudentProfile()]);
+      setLoading(false);
+    };
+    loadDashboard();
   }, [fetchNotices, fetchStudentProfile]);
+
+  if (loading) {
+    return <DashboardLoader />;
+  }
 
   return (
     <div style={{ fontFamily: '"Inter", sans-serif' }}>

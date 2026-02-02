@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | 'admin' | 'exam_department'>('student');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const { login, logout } = useAuth();
   const navigate = useNavigate();
@@ -20,20 +22,27 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    const success = await login(email, password, role);
-    if (success) {
-      if (role === 'student') {
-        navigate('/student/dashboard');
-      } else if (role === 'teacher') {
-        navigate('/teacher/dashboard');
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (role === 'exam_department') {
-        navigate('/exam/dashboard');
+    try {
+      const success = await login(email, password, role);
+      if (success) {
+        if (role === 'student') {
+          navigate('/student/dashboard');
+        } else if (role === 'teacher') {
+          navigate('/teacher/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (role === 'exam_department') {
+          navigate('/exam/dashboard');
+        }
+      } else {
+        setError('Invalid credentials');
       }
-    } else {
-      setError('Invalid credentials');
+    } catch (error) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,12 +77,14 @@ const Login: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -87,12 +98,14 @@ const Login: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             />
           </div>
@@ -104,12 +117,14 @@ const Login: React.FC = () => {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'student' | 'teacher' | 'admin' | 'exam_department')}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: loading ? 0.6 : 1
               }}
             >
               <option value="student">Student</option>
@@ -127,19 +142,24 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
+            disabled={loading}
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#3498db',
+              backgroundColor: loading ? '#7f8c8d' : '#3498db',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               fontSize: '16px',
-              cursor: 'pointer',
-              marginBottom: '20px'
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            Login
+            {loading ? <LoadingSpinner size={16} /> : 'Sign In'}
           </button>
         </form>
 
